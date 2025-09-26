@@ -1,4 +1,4 @@
-<!-- save as dashboard.html -->
+<!-- save as dashboard.html (Jinja template) -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -54,7 +54,7 @@
     .post .post-actions{display:flex;gap:18px;margin-top:14px;color:var(--muted);font-weight:600}
     .right{position:sticky;top:28px;height:calc(100vh - 56px);display:flex;flex-direction:column;gap:18px}
     .widget{background:var(--card);border-radius:12px;padding:16px;box-shadow:var(--soft-shadow)}
-    .widget h4{margin:0 0 8px 0;font-size:15px;color:#183046}
+    .widget h4{Margin:0 0 8px 0;font-size:15px;color:#183046}
     .sponsored img{width:100%;height:120px;object-fit:cover;border-radius:8px;margin-bottom:10px}
     .people-list{display:flex;flex-direction:column;gap:10px}
     .people-list .person{display:flex;align-items:center;gap:12px}
@@ -70,6 +70,20 @@
     @media (max-width:1100px){.wrap{grid-template-columns:200px 1fr;gap:18px}.right{display:none}}
     @media (max-width:700px){.wrap{grid-template-columns:1fr; padding:0 12px;}.left{display:flex;flex-direction:row;gap:8px;overflow:auto;height:auto}.left .nav{flex-direction:row}.left .nav a{white-space:nowrap;padding:8px}}
     .muted{color:var(--muted);font-size:13px}
+
+    /* ---------- ADDED: reusable avatar image class ---------- */
+    .avatar-img{
+      width:120px;            /* avatar diameter */
+      height:120px;
+      border-radius:50%;
+      object-fit:cover;
+      display:block;
+      border:6px solid #fff;  /* matches profile-card style */
+      box-shadow:0 6px 24px rgba(14,30,37,0.08);
+      margin-bottom:10px;
+    }
+    /* you can override size where needed by wrapping or using inline styles */
+    /* ------------------------------------------------------- */
   </style>
 </head>
 <body>
@@ -88,17 +102,14 @@
         <a>Sponsors</a>
         <a>Coaches</a>
         <a>Applications</a>
-        <a>Messages <span style="background:#e6f2ff;color:#1976d2;padding:3px 8px;border-radius:999px;margin-left:auto;font-weight:700">2</span></a>
-        <a style="margin-top:12px;color:var(--muted)">Settings</a>
-        <a style="color:var(--muted)">Help</a>
       </div>
 
       <div style="flex:1"></div>
 
       <div class="widget progress-wrap">
-        <div class="circle" id="profileCircle" style="--p:50%">50%</div>
+        <div class="circle" id="profileCircle" style="--p: {{ profile_pct }}%">{{ profile_pct }}%</div>
         <div class="progress-text">
-          <div style="font-weight:700">50% COMPLETE</div>
+          <div style="font-weight:700">{{ profile_pct }}% COMPLETE</div>
           <div class="muted" style="margin-top:8px">Add achievements to boost your profile visibility</div>
           <a href="#" class="muted" style="display:inline-block;margin-top:8px;color:var(--accent);font-weight:700;text-decoration:none">Complete profile</a>
         </div>
@@ -111,7 +122,8 @@
       <!-- composer -->
       <div class="composer" id="composer">
         <div class="top">
-          <div class="avatar"><img src="https://randomuser.me/api/portraits/men/21.jpg" alt=""></div>
+          <!-- keep structure but add data-seed so JS can map to the vecteezy avatars -->
+          <div class="avatar"><img data-seed="{{ display_name|e }}" src="{{ avatar_url }}" alt=""></div>
           <div style="flex:1">
             <textarea id="postText" placeholder="Share your achievement or opportunity..."></textarea>
             <div style="display:flex;gap:8px;margin-top:8px">
@@ -129,7 +141,7 @@
         <!-- Athlete post -->
         <article class="post">
           <div class="meta">
-            <div class="avatar" style="width:56px;height:56px"><img src="https://randomuser.me/api/portraits/men/45.jpg" alt=""></div>
+            <div class="avatar" style="width:56px;height:56px"><img data-seed="Rahul Mehta" src="https://randomuser.me/api/portraits/men/45.jpg" alt=""></div>
             <div>
               <div><span class="name">Rahul Mehta</span> <span class="role muted">— Athlete (Boxing)</span></div>
               <div class="muted" style="font-size:13px;margin-top:6px">1d • Verified Athlete</div>
@@ -146,7 +158,7 @@
         <!-- Sponsor post -->
         <article class="post">
           <div class="meta">
-            <div class="avatar" style="width:56px;height:56px"><img src="https://randomuser.me/api/portraits/women/60.jpg" alt=""></div>
+            <div class="avatar" style="width:56px;height:56px"><img data-seed="Neha Kapoor" src="https://randomuser.me/api/portraits/women/60.jpg" alt=""></div>
             <div>
               <div><span class="name">Neha Kapoor</span> <span class="role muted">— Sponsor, Nike India</span></div>
               <div class="muted" style="font-size:13px;margin-top:6px">2d</div>
@@ -176,7 +188,7 @@
         <!-- Coach post -->
         <article class="post">
           <div class="meta">
-            <div class="avatar" style="width:56px;height:56px"><img src="https://randomuser.me/api/portraits/men/52.jpg" alt=""></div>
+            <div class="avatar" style="width:56px;height:56px"><img data-seed="Coach Arjun" src="https://randomuser.me/api/portraits/men/52.jpg" alt=""></div>
             <div>
               <div><span class="name">Coach Arjun</span> <span class="role muted">— Athletics Coach</span></div>
               <div class="muted" style="font-size:13px;margin-top:6px">3d</div>
@@ -198,7 +210,8 @@
     <!-- RIGHT -->
     <aside class="right">
       <div class="widget sponsored">
-        <img src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=900&q=60" alt="">
+        <!-- changed: sponsored image is now rendered as a circular avatar -->
+        <img src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=900&q=60" alt="Sponsored avatar" class="avatar-img">
         <h4 class="muted">Sponsored</h4>
         <div style="font-weight:700">Adidas Young Champs</div>
         <div class="muted" style="margin-top:8px;font-size:13px">Scholarships for under-18 athletes across India. Apply today!</div>
@@ -215,9 +228,10 @@
 
       <div class="widget profile-card">
         <div style="height:64px;background:linear-gradient(90deg,#2ea3ff,#59c1ff);border-radius:10px;"></div>
-        <img src="https://randomuser.me/api/portraits/men/11.jpg" alt="">
-        <h4 style="margin:12px 0 4px 0">You</h4>
-        <div class="muted">Athlete — Complete your profile</div>
+        <!-- profile card avatar will be set by JS to one of the vecteezy avatars -->
+        <img data-seed="{{ display_name|e }}" src="{{ avatar_url }}" alt="Profile avatar">
+        <h4 style="margin:12px 0 4px 0">{{ display_name }}</h4>
+        <div class="muted">{{ role_label }} — Complete your profile</div>
         <button class="connect-btn">Update Profile</button>
       </div>
     </aside>
@@ -225,21 +239,112 @@
   </div>
 
   <script>
+    /**
+     * Avatar mapping:
+     * - Use the three vecteezy avatars you requested (host them under /static/avatars/)
+     * - Map each user deterministically to one of the three images using a simple hash
+     * - Fallback: DiceBear identicon if local files are not present
+     *
+     * NOTE: Please download your three images into:
+     *   /static/avatars/avatar1.png
+     *   /static/avatars/avatar2.png
+     *   /static/avatars/avatar3.png
+     *
+     * If you cannot host them, the script will fall back to a generated identicon.
+     */
+
+    // list of local avatar paths (preferred). Adjust path if your static folder differs.
+    const hostedAvatars = [
+      '/static/p1.jpg', // vecteezy avatar 1 (spectacles guy)
+      '/static/p2.webp', // vecteezy avatar 2 (cheerful with glasses)
+      '/static/p3.webp'  // vecteezy avatar 3 (blonde woman)
+    ];
+
+    // fallback image generator (DiceBear) in case local files aren't available
+    function dicebear(seed) {
+      return `https://avatars.dicebear.com/api/identicon/${encodeURIComponent(seed || 'anon')}.svg?scale=85`;
+    }
+
+    // simple string -> integer hash (deterministic)
+    function strHash(s) {
+      let h = 2166136261 >>> 0;
+      for (let i = 0; i < s.length; i++) {
+        h ^= s.charCodeAt(i);
+        h = Math.imul(h, 16777619) >>> 0;
+      }
+      return h >>> 0;
+    }
+
+    // choose an avatar index from seed
+    function avatarIndexForSeed(seed, count) {
+      const h = strHash(seed || 'anon');
+      return h % count;
+    }
+
+    // attempt to load a hosted avatar (returns Promise that resolves to URL that worked)
+    function probeAvatar(url) {
+      return new Promise(resolve => {
+        const img = new Image();
+        img.onload = () => resolve(url); // exists & loaded
+        img.onerror = () => resolve(null); // not found or blocked
+        img.src = url;
+      });
+    }
+
+    // Set avatars for all <img data-seed="..."> elements
+    async function applyVecteezyAvatars() {
+      // pre-check which hosted avatars actually load (some servers block hotlink).
+      const checks = await Promise.all(hostedAvatars.map(u => probeAvatar(u)));
+      const available = checks.map((v,i) => v ? hostedAvatars[i] : null);
+
+      // If none available, we'll use dicebear as fallback
+      const imgs = document.querySelectorAll('img[data-seed]');
+      imgs.forEach(img => {
+        const seed = img.getAttribute('data-seed') || '{{ display_name|e }}' || 'anon';
+        let chosenUrl = null;
+
+        // pick index deterministically
+        const idx = avatarIndexForSeed(seed, hostedAvatars.length);
+        if (available[idx]) {
+          chosenUrl = available[idx];
+        } else {
+          // if chosen local not available, attempt to pick any available local image (first found)
+          const anyLocal = available.find(v => v);
+          chosenUrl = anyLocal || dicebear(seed);
+        }
+
+        img.src = chosenUrl;
+        if(!img.alt || img.alt.trim() === '') img.alt = `Avatar for ${seed}`;
+      });
+    }
+
+    // Posting: when a user posts, use the same deterministic avatar as their profile
+    function avatarForSeedSync(seed) {
+      // choose local if available synchronously (we can't probe here sync) — prefer path index
+      const idx = avatarIndexForSeed(seed, hostedAvatars.length);
+      // return hosted path (may 404), but DOM script will already have set working ones on load
+      return hostedAvatars[idx] || dicebear(seed);
+    }
+
+    // Posting logic (keeps your markup)
     const postBtn = document.getElementById('postBtn');
     const postText = document.getElementById('postText');
     const feed = document.getElementById('feed');
+    const loggedInSeed = '{{ display_name|e }}'; // use user_id if you prefer stable mapping
 
     postBtn.addEventListener('click', () => {
       const text = postText.value.trim();
       if(!text) return alert('Write something first 🙂');
 
+      const myAvatar = avatarForSeedSync(loggedInSeed);
+
       const article = document.createElement('article');
       article.className = 'post';
       article.innerHTML = `
         <div class="meta">
-          <div class="avatar" style="width:56px;height:56px"><img src="https://randomuser.me/api/portraits/men/21.jpg" alt=""></div>
+          <div class="avatar" style="width:56px;height:56px"><img src="${myAvatar}" alt=""></div>
           <div>
-            <div><span class="name">You</span> <span class="role muted">— Athlete</span></div>
+            <div><span class="name">{{ display_name }}</span> <span class="role muted">— {{ role_label }}</span></div>
             <div class="muted" style="font-size:13px;margin-top:6px">Just now</div>
           </div>
         </div>
@@ -255,9 +360,14 @@
     });
 
     function escapeHtml(str){
-      return str.replace(/[&<>"'`=\/]/g, function(s){ 
-        return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','/':'&#x2F;','`':'&#x60;','=':'&#x3D;'})[s];});
+      return str.replace(/[&<>"'`=\/]/g, function(s){
+        return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','/':'&#x2F;','`':'&#x60;','=':'&#x3D;'})[s];
+      });
     }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      applyVecteezyAvatars();
+    });
   </script>
 </body>
 </html>
