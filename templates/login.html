@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login Page with Hexagon Status & Registration</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: linear-gradient(to right, #e3f2fd, #f3e5f5);
+    }
+
+    .container {
+      display: flex;
+      width: 950px;
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+
+    /* Left Login Section */
+    .login-section {
+      flex: 1;
+      padding: 40px;
+    }
+
+    .login-section h2 {
+      margin-bottom: 10px;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 12px;
+      margin-top: 5px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background: black;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      opacity: 0.9;
+    }
+
+    .register-link {
+      margin-top: 10px;
+      text-align: center;
+      font-size: 14px;
+    }
+
+    .register-link a {
+      color: #1976d2;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+
+    /* Right Section */
+   .visual-section {
+  flex: 1;
+  background-size: cover;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+
+
+    .visual-section img {
+      max-width: 250px;
+      border-radius: 8px;
+    }
+
+    .hexagon {
+      width: 120px;
+      height: 120px;
+      background: rgba(25, 118, 210, 0.05);
+      position: relative;
+      clip-path: polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      font-size: 48px;
+      font-weight: bold;
+      border: 2px solid rgba(25, 118, 210, 0.5);
+      margin-bottom: 20px;
+    }
+
+    .status-message {
+      font-size: 16px;
+      font-weight: bold;
+      text-align: center;
+      min-height: 24px;
+    }
+
+    .success {
+      color: #00bcd4; /* cyan blue */
+    }
+
+    .error {
+      color: #ff4081; /* reddish-pink */
+    }
+
+    /* Modal for Registration */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 10;
+      left: 0; top: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.6);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-content {
+      background: white;
+      padding: 25px;
+      border-radius: 12px;
+      width: 350px;
+      text-align: center;
+    }
+
+    .close {
+      float: right;
+      font-size: 20px;
+      cursor: pointer;
+      color: red;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Left Section -->
+    <div class="login-section">
+      <h2>Welcome Back!</h2>
+      <p>Please enter log in details below</p>
+      <form id="loginForm">
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="email" placeholder="Enter email" required>
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="password" placeholder="Enter password" required minlength="6">
+        </div>
+        <button type="submit">Sign In</button>
+      </form>
+      <div class="register-link">
+        Not registered? <a id="openRegister">Register</a>
+      </div>
+    </div>
+
+    <!-- Right Section -->
+    <div class="visual-section">
+      <img src="https://via.placeholder.com/250x250.png?text=Athlete+App" id="defaultImage" alt="Athlete Illustration">
+      <div class="hexagon" id="statusIcon">?</div>
+      <div class="status-message" id="statusMessage"></div>
+    </div>
+  </div>
+
+  <!-- Registration Modal -->
+  <div class="modal" id="registerModal">
+    <div class="modal-content">
+      <span class="close" id="closeModal">&times;</span>
+      <h3>Register</h3>
+      <form id="registerForm">
+        <div class="form-group">
+          <input type="email" id="regEmail" placeholder="Email" required>
+        </div>
+        <div class="form-group">
+          <input type="password" id="regPassword" placeholder="Password" required minlength="6">
+        </div>
+        <div class="form-group">
+          <select id="regType" required>
+            <option value="">Select Type</option>
+            <option value="user">User</option>
+            <option value="sponsor">Sponsor</option>
+            <option value="coach">Coach</option>
+          </select>
+        </div>
+        <button type="submit">Register</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+  const loginForm = document.getElementById("loginForm");
+  const statusIcon = document.getElementById("statusIcon");
+  const statusMessage = document.getElementById("statusMessage");
+  const defaultImage = document.getElementById("defaultImage");
+
+  loginForm.addEventListener("submit", function(event) {
+    event.preventDefault();
+
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+
+    const emailPattern = /^[^ ]+@[^ ]+\.[a-z]{2,3}$/;
+
+    // Show hexagon instead of image
+    defaultImage.style.display = "none";
+    statusIcon.style.display = "flex";
+
+    if (!email.match(emailPattern)) {
+      statusIcon.textContent = "✖";
+      statusIcon.style.color = "#ff4081";
+      statusMessage.textContent = "Invalid Email format";
+      statusMessage.className = "status-message error";
+      return;
+    }
+
+    if (password.length < 6) {
+      statusIcon.textContent = "✖";
+      statusIcon.style.color = "#ff4081";
+      statusMessage.textContent = "Password must be at least 6 characters";
+      statusMessage.className = "status-message error";
+      return;
+    }
+
+    // ✅ Login fetch
+    fetch("/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        statusIcon.textContent = "✔";
+        statusIcon.style.color = "#2ecc71"; // greenish-blue tick
+        statusMessage.textContent = "Login successful!";
+        window.location.href = data.redirect;
+      } else {
+        statusIcon.textContent = "✖";
+        statusIcon.style.color = "#e74c3c"; // red cross
+        statusMessage.textContent = data.message;
+      }
+    });
+  });  // ✅ this was missing!
+
+  // Registration Modal
+  const registerModal = document.getElementById("registerModal");
+  const openRegister = document.getElementById("openRegister");
+  const closeModal = document.getElementById("closeModal");
+
+  openRegister.onclick = () => registerModal.style.display = "flex";
+  closeModal.onclick = () => registerModal.style.display = "none";
+
+  window.onclick = function(event) {
+    if (event.target === registerModal) {
+      registerModal.style.display = "none";
+    }
+  };
+
+  // Registration form handler
+  document.getElementById("registerForm").addEventListener("submit", function(event) {
+    event.preventDefault();
+
+    const regEmail = document.getElementById("regEmail").value.trim();
+    const regPassword = document.getElementById("regPassword").value.trim();
+    const regType = document.getElementById("regType").value;
+
+    const emailPattern = /^[^ ]+@[^ ]+\.[a-z]{2,}$/;
+
+    if (!regEmail.match(emailPattern)) {
+      alert("❌ Please enter a valid email address.");
+      return;
+    }
+
+    if (regPassword.length < 6) {
+      alert("❌ Password must be at least 6 characters long.");
+      return;
+    }
+
+    if (regType === "") {
+      alert("❌ Please select a type (User, Sponsor, Coach).");
+      return;
+    }
+
+    // ✅ Register fetch
+    fetch("/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: regEmail, password: regPassword, type: regType })
+    })
+    .then(res => res.json())
+    .then(data => {
+      alert(data.message);
+      if (data.success) {
+        registerModal.style.display = "none";
+      }
+    });
+  });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,786 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Sporture</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Montserrat:wght@300;500;700&display=swap" rel="stylesheet">
+
+
+  <style>
+    :root{
+      --accent: #33a8d8;
+      --accent-2: #16c6b7;
+      --fg: #ffffff;
+      --muted: rgba(255,255,255,0.94);
+      --muted-2: rgba(255,255,255,0.82);
+      --dark-overlay: rgba(18, 128, 187, 0.72);
+      --ease: cubic-bezier(.2,.9,.25,1);
+      --card-bg: rgba(255,255,255,0.12);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;background:#050505;color:var(--muted);font-family:Montserrat,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;scroll-behavior:smooth; -webkit-font-smoothing:antialiased;}
+    a{color:inherit;text-decoration:none}
+    img{max-width:100%;display:block;}
+
+    /* Container + scroll snap (keeps previous behavior) */
+    .slides { height:100vh; overflow-y:auto; scroll-snap-type: y mandatory; -webkit-overflow-scrolling:touch; position:relative; }
+    .slide { min-height:100vh; width:100%; scroll-snap-align:start; display:flex; align-items:center; justify-content:center; position:relative; }
+
+    /* NAV (top) */
+    .nav { position:fixed; top:18px; left:18px; right:18px; z-index:70; display:flex; align-items:center; justify-content:space-between; pointer-events:auto; }
+    .brand { display:flex; gap:12px; align-items:center; }
+    .logo { width:56px; height:56px; border-radius:6px; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,var(--accent),var(--accent-2)); color:#042; font-family:"Playfair Display",serif; font-weight:700; font-size:18px; }
+    .brand .name { color:var(--muted); font-weight:700; letter-spacing:1px; }
+    .nav-links { display:flex; gap:12px; align-items:center; }
+    .nav-links a { color:var(--muted-2); padding:6px 10px; border-radius:6px; }
+    .nav-links a.active, .nav-links a:hover { color:#fff; background: rgba(255,255,255,0.03); }
+
+    /* HERO */
+    .hero { position:relative; overflow:hidden; color:#fff; }
+    .bg-video { position:absolute; inset:0; z-index:0; background:#0b1720; }
+    .bg-video video, .bg-video img { width:100%; height:100%; object-fit:cover; transform:scale(1.02); display:block; }
+    /* overlay tuned to light blue sports tint similar to Elegance */
+    .overlay { position:absolute; inset:0; z-index:1; background: linear-gradient(180deg, rgba(34,155,210,0.75), rgba(18,176,163,0.72)); pointer-events:none; }
+
+    .hero-inner { position:relative; z-index:3; text-align:center; max-width:1100px; padding:30px; display:flex; flex-direction:column; gap:12px; align-items:center; }
+    .hero-welcome { color:rgba(255,255,255,0.95); text-transform:uppercase; letter-spacing:2px; font-weight:400; margin-bottom:14px; font-size:1rem; }
+    .hero-title { font-family:"Playfair Display", serif; font-weight:700; color:#fff; font-size:clamp(2.8rem,6vw,5rem); margin:0; line-height:0.92; text-transform:uppercase; letter-spacing:2px; text-shadow: 0 10px 36px rgba(0,0,0,0.28); }
+    .hero-sub { color:rgba(255,255,255,0.95); max-width:760px; text-align:center; font-size:1.05rem; line-height:1.7; margin-top:18px; }
+
+    /* CTA row */
+    .hero-cta { margin-top:18px; display:flex; gap:12px; }
+    .btn { padding:10px 16px; border-radius:10px; font-weight:700; border:none; cursor:pointer; }
+    .btn-primary { background:#fff; color:#0b6b84; border-radius:10px; font-weight:700; }
+
+    /* SCROLL DOWN indicator */
+    .scroll-down { position:absolute; bottom:30px; left:50%; transform:translateX(-50%); text-align:center; color:#fff; font-size:14px; z-index:4; }
+    .scroll-down .mouse { width:26px; height:40px; border:2px solid #fff; border-radius:18px; margin:0 auto 8px; position:relative; }
+    .scroll-down .mouse::before { content:""; position:absolute; top:8px; left:50%; transform:translateX(-50%); width:6px; height:6px; background:#fff; border-radius:50%; animation:scrollDown 1.8s infinite; }
+    @keyframes scrollDown { 0%{opacity:1; transform:translateY(0);} 50%{opacity:0; transform:translateY(10px);} 100%{opacity:1; transform:translateY(0);} }
+
+    /* Right-side social icons */
+    .social-vertical{ position:fixed; right:18px; top:50%; transform:translateY(-50%); display:flex; flex-direction:column; gap:18px; z-index:80; }
+    .social-vertical a{ width:40px; height:40px; border-radius:8px; display:flex; align-items:center; justify-content:center; color:#fff; background: rgba(255,255,255,0.06); text-decoration:none; font-weight:700; transition: transform .18s ease, background .18s ease; }
+    .social-vertical a:hover{ transform: translateY(-6px); background: rgba(255,255,255,0.11); }
+
+    #slide-about { position:relative; overflow:hidden; }
+
+    
+    :root { --about-bg: url('https://images.unsplash.com/photo-1534438327279-8b1c9f7b88d9?auto=format&fit=crop&w=1600&q=60'); }
+
+    #slide-about::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      z-index:0;
+      background-image: var(--about-bg);
+      background-size:cover;
+      background-position:center center;
+      transform: scale(1.02);
+      filter: saturate(.95) contrast(.94) blur(0.4px);
+    }
+
+    /* same bluish overlay as hero so the two slides visually blend */
+    #slide-about::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      z-index:1;
+      background: linear-gradient(180deg, rgba(34,155,210,0.76), rgba(18,176,163,0.68));
+    }
+
+    .about-wrap{
+      position:relative;
+      z-index:2;
+      width:100%;
+      max-width:1200px;
+      padding:90px 20px;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      color:var(--fg);
+    }
+
+    /* About header that blends with hero */
+    .about-top {
+      text-align:center;
+      margin-bottom:26px;
+      color:var(--fg);
+    }
+    .about-top .kicker {
+      text-transform:uppercase;
+      letter-spacing:2px;
+      font-weight:700;
+      opacity:0.95;
+      margin-bottom:8px;
+    }
+    .about-top h2 {
+      font-family:"Playfair Display", serif;
+      font-size:clamp(1.6rem,4.2vw,2.6rem);
+      margin:0;
+      font-weight:700;
+      letter-spacing:0.06em;
+      text-transform:uppercase;
+      color:var(--fg);
+    }
+    .about-top p.lead {
+      margin-top:14px;
+      color:rgba(255,255,255,0.95);
+      max-width:920px;
+      line-height:1.6;
+      font-size:1.02rem;
+    }
+
+    /* three feature cards (Problem/Solution/How it works) */
+    .about-grid{
+      margin-top:36px;
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap:26px;
+      width:100%;
+      align-items:stretch;
+      justify-items:center;
+    }
+
+    .about-card{
+      width:100%;
+      max-width:360px;
+      min-height:260px;
+      border-radius:14px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.06);
+      padding:28px;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      text-align:center;
+      transition: transform .36s var(--ease), background .36s var(--ease);
+      backdrop-filter: blur(6px);
+    }
+
+    .about-card:hover{ transform: translateY(-8px); background: rgba(255,255,255,0.08); }
+
+    .about-icon{ width:64px; height:64px; border-radius:12px; display:flex; align-items:center; justify-content:center; margin-bottom:18px; background: rgba(255,255,255,0.12); color:#fff; font-size:26px; }
+    .about-title{ font-weight:700; color:var(--fg); margin-bottom:10px; font-size:1.05rem; }
+    .about-desc{ color: rgba(255,255,255,0.92); line-height:1.6; font-size:0.98rem; }
+
+    @media (max-width:1100px){
+      .about-grid{ grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width:760px){
+      .about-grid{ grid-template-columns: 1fr; padding:0 22px; }
+      .brand .name{ display:none; }
+      .social-vertical{ display:none; }
+    }
+
+    /* other slides (unchanged) */
+    .cards-row{ margin-top:36px; display:grid; grid-template-columns: repeat(3, 1fr); gap:30px; width:100%; align-items:stretch; justify-items:center; }
+    .service-card{ width:100%; max-width:360px; min-height:280px; border-radius:14px; background: rgba(255,255,255,0.06); box-shadow: 0 10px 30px rgba(4,30,40,0.25); border: 1px solid rgba(255,255,255,0.06); padding:36px 28px; display:flex; flex-direction:column; align-items:center; text-align:center; transition: transform .36s var(--ease), background .36s var(--ease); backdrop-filter: blur(6px); }
+    .svc-icon{ width:64px; height:64px; border-radius:12px; display:flex; align-items:center; justify-content:center; margin-bottom:20px; background: rgba(255,255,255,0.12); color:#fff; font-size:28px; box-shadow: 0 8px 20px rgba(0,0,0,0.25); }
+    .svc-title{ font-weight:700; color:var(--fg); margin-bottom:12px; font-size:1.1rem; }
+    .svc-desc{ color: rgba(255,255,255,0.88); line-height:1.6; font-size:0.98rem; }
+    .cards-dots{ margin-top:36px; display:flex; gap:10px; align-items:center; justify-content:center; }
+    .cards-dots .dot{ width:12px; height:12px; border-radius:50%; background:rgba(255,255,255,0.28); box-shadow: inset 0 2px 0 rgba(255,255,255,0.06); transition: transform .25s ease, background .25s ease; }
+    .cards-dots .dot.active{ background: #fff; transform:scale(1.05); box-shadow: 0 6px 18px rgba(0,0,0,0.18); }
+
+    section.content { padding:90px 20px; background:linear-gradient(180deg, rgba(8,8,8,0.98), rgba(4,4,4,0.99)); color:var(--muted-2); }
+    .container { max-width:1120px; margin:0 auto; width:100%; }
+
+  
+    #slide-contact { background: linear-gradient(180deg, rgba(8,8,8,0.98), rgba(6,6,6,0.99)); }
+
+
+    .testimonials-wrap {
+      display:flex;
+      align-items:center;
+      gap:18px;
+      justify-content:center;
+      position:relative;
+      max-width:1100px;
+      margin: 0 auto;
+    }
+
+    /* Buttons */
+    .t-btn {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.06);
+      color: var(--fg);
+      width:56px;
+      height:56px;
+      border-radius:10px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:28px;
+      cursor:pointer;
+      box-shadow: 0 6px 20px rgba(2,8,14,0.6);
+      transition: transform .18s ease, background .18s ease;
+    }
+    .t-btn:hover { transform: translateY(-6px); background: rgba(255,255,255,0.09); }
+
+    /* viewport & track */
+    .t-viewport {
+      overflow:hidden;
+      width:840px;
+      max-width:calc(100% - 160px);
+      border-radius:16px;
+      position:relative;
+      box-shadow: 0 30px 80px rgba(2,8,14,0.6);
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border: 1px solid rgba(255,255,255,0.04);
+      backdrop-filter: blur(8px) saturate(120%);
+    }
+
+    /* horizontal track that slides */
+    .t-track {
+      display:flex;
+      transition: transform 520ms var(--ease);
+      will-change: transform;
+    }
+
+    /* card */
+    .t-card {
+      min-width:100%;
+      padding:28px 36px;
+      display:flex;
+      align-items:stretch;
+      gap:22px;
+      position:relative;
+      color:var(--muted-2);
+    }
+
+    /* large decorative quote mark */
+    .t-quote-mark {
+      position:absolute;
+      left:20px;
+      top:12px;
+      font-size:98px;
+      color: rgba(200,168,93,0.12); /* warm/golden hint from video */
+      pointer-events:none;
+      font-family: "Playfair Display", serif;
+    }
+
+    /* body text + person */
+    .t-body { margin-left:36px; display:flex; flex-direction:column; justify-content:space-between; width:100%; }
+    .t-text {
+      font-size:1.05rem;
+      line-height:1.7;
+      color: rgba(255,255,255,0.94);
+      max-width:760px;
+    }
+
+    /* person row */
+    .t-person { display:flex; align-items:center; gap:12px; margin-top:18px; }
+    .t-avatar { width:64px; height:64px; border-radius:50%; object-fit:cover; border:3px solid rgba(255,255,255,0.06); box-shadow: 0 6px 20px rgba(0,0,0,0.45); }
+    .t-name { font-weight:700; color:#fff; font-size:0.98rem; }
+    .t-role { font-size:0.84rem; color: rgba(255,255,255,0.78); }
+
+    /* dots */
+    .t-dots { display:flex; gap:10px; justify-content:center; margin-top:16px; }
+    .t-dots button { width:10px;height:10px;border-radius:50%;border:0;background:rgba(255,255,255,0.18);cursor:pointer;box-shadow: inset 0 1px 0 rgba(255,255,255,0.06); }
+    .t-dots button.active { background:#fff; transform:scale(1.12); box-shadow: 0 6px 18px rgba(0,0,0,0.18); }
+
+    /* responsive */
+    @media (max-width:920px) {
+      .t-viewport { width: 640px; }
+      .t-quote-mark { font-size:72px; left:16px; top:6px; }
+    }
+    @media (max-width:760px) {
+      .testimonials-wrap { padding: 0 20px; gap:12px; }
+      .t-btn { display:none; } /* hide arrows on small screens (swipe) */
+      .t-viewport { width:100%; max-width:100%; }
+      .t-text { font-size:1rem; }
+      .t-card { padding:20px; }
+      .t-quote-mark { font-size:52px; left:10px; top:6px; }
+    }
+
+    /* Contact Section */
+    #slide-contact {
+      position: relative;
+      background: linear-gradient(180deg, rgba(18,176,163,0.72), rgba(34,155,210,0.62));
+      color: #fff;
+      padding: 80px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .contact-wrap {
+      max-width: 1100px;
+      width: 100%;
+      text-align: center;
+    }
+
+    .contact-title {
+      font-size: 1.8rem;
+      text-transform: uppercase;
+      margin-bottom: 36px;
+      color: #fff;
+    }
+    .contact-title span {
+      display: block;
+      font-size: 2.6rem;
+      font-weight: 700;
+      margin-top: 6px;
+    }
+
+    .contact-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+      align-items: start;
+    }
+
+    .contact-info {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .c-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: rgba(255,255,255,0.12);
+      padding: 18px;
+      border-radius: 10px;
+      backdrop-filter: blur(6px);
+    }
+    .c-icon {
+      font-size: 22px;
+    }
+    .c-text {
+      font-size: 1rem;
+      color: rgba(255,255,255,0.95);
+    }
+
+    .contact-form {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .contact-form input,
+    .contact-form textarea {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 8px;
+      border: none;
+      outline: none;
+      background: rgba(255,255,255,0.12);
+      color: #fff;
+      font-size: 1rem;
+    }
+    .contact-form textarea { min-height: 120px; resize: vertical; }
+    .btn-submit {
+      background: #fff;
+      color: #0b6b84;
+      font-weight: 700;
+      padding: 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      border: none;
+      transition: background 0.25s ease;
+    }
+    .btn-submit:hover { background: #e5e5e5; }
+
+    /* Responsive */
+    @media (max-width: 760px) {
+      .contact-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="slides" id="slides" aria-label="Slides container">
+    <!-- HERO SLIDE (unchanged from your file) -->
+    <section class="slide hero" id="slide-hero" aria-label="Hero">
+      <div class="bg-video" aria-hidden="true">
+        <video id="heroVideo" autoplay muted loop playsinline preload="auto" poster="https://images.unsplash.com/photo-1521412644187-c49fa049e84d?auto=format&fit=crop&w=1600&q=60">
+          <source src="hero.mp4" type="video/mp4">
+        </video>
+      </div>
+
+      <div class="overlay" aria-hidden="true"></div>
+
+      <div class="nav" role="navigation" aria-label="Main nav">
+        <div class="brand" aria-label="Brand">
+          <div class="name" style="font-weight:700; font-size:1.4rem; color:#fff;">SPORTURE</div>
+        </div>
+        <nav class="nav-links">
+          <a href="#slide-hero" class="active">Home</a>
+          <a href="#slide-about">About Us</a>
+          <a href="#slide-testimonials">Testimonials</a>
+          <a href="/login_page">Login/Register</a>
+          <a href="#slide-contact">Contact Me</a>
+        </nav>
+      </div>
+
+      <div class="hero-inner" role="main">
+        <div class="hero-welcome">WE'RE HERE FOR ATHLETES</div>
+
+        <h1 class="hero-title">Unlocking Athletic Potential</h1>
+
+        <p class="hero-sub">
+          Talented athletes are giving up on their dreams not due to lack of skill but because of financial barriers,
+          missing coaching, and low awareness of government schemes. Sponsors, coaches and programs exist — but they’re
+          disconnected from the athletes who need them most. AthleteMatch bridges that gap so talent can reach the world stage.
+        </p>
+
+        <div class="hero-cta">
+          <a class="btn btn-primary" href="#slide-about">Find Sponsors & Coaches</a>
+        </div>
+      </div>
+
+      <div class="scroll-down" aria-hidden="true">
+        <div class="mouse"></div>
+        SCROLL DOWN
+      </div>
+    </section>
+
+    <section class="slide" id="slide-about" aria-label="About / Mission">
+      <div class="about-wrap">
+        <div class="about-top">
+          <div class="kicker">ABOUT</div>
+          <h2>We connect talent with opportunity</h2>
+        </div>
+
+        <div class="about-grid" role="list">
+          <article class="about-card" role="listitem" aria-label="The Problem">
+            <div class="about-icon" aria-hidden="true">⚠️</div>
+            <div class="about-title">The Problem</div>
+            <div class="about-desc">
+              Exceptional athletes drop out because of three core gaps: lack of funding, no access to quality coaching, and low awareness of support schemes.
+              This wastes talent and prevents the country from producing international champions.
+              </div>
+          </article>
+
+          <article class="about-card" role="listitem" aria-label="What We Offer">
+            <div class="about-icon" aria-hidden="true">💡</div>
+            <div class="about-title">What AthleteMatch Does</div>
+            <div class="about-desc">
+              We connect verified athletes with sponsors and qualified coaches through a single, transparent application and approval flow.
+              <div style="margin-top:10px;font-weight:700;color:rgba(255,255,255,0.9);">Core services:</div>
+              <div style="font-size:0.92rem;color:rgba(255,255,255,0.85);margin-top:6px;">Verification • Targeted sponsor matching • Coach introductions • Application tracking</div>
+            </div>
+          </article>
+
+          <article class="about-card" role="listitem" aria-label="How to Get Involved">
+            <div class="about-icon" aria-hidden="true">🤝</div>
+            <div class="about-title">How To Get Involved</div>
+            <div class="about-desc">
+              Athletes: submit your profile and achievements to apply for sponsorship or coaching.  
+              Sponsors & Coaches: review verified athlete profiles and connect directly.
+              <div style="margin-top:10px;font-weight:700;color:rgba(255,255,255,0.9);">Next step:</div>
+              <div style="font-size:0.92rem;color:rgba(255,255,255,0.85);margin-top:6px;">Create a profile  — click “Find Sponsors & Coaches” above to begin.</div>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- TESTIMONIALS slide  -->
+    <section class="slide content" id="slide-testimonials" aria-label="Testimonials" style="position:relative; overflow:hidden;">
+      <!-- new sports background (blues/teal tones) -->
+      <div style="position:absolute; inset:0; z-index:0; background-image: url('https://images.unsplash.com/photo-1500048993953-d6f7f7f9f9d9?auto=format&fit=crop&w=1600&q=80'); background-size:cover; background-position:center;"></div>
+
+      <!-- subtle bluish overlay so text reads well and blends with hero/about -->
+      <div style="position:absolute;inset:0;background:linear-gradient(180deg, rgba(18,176,163,0.72), rgba(34,155,210,0.62));z-index:1;"></div>
+
+      <div class="container" style="position:relative; z-index:2;">
+        <h2 style="color:#fff;text-align:center;margin-bottom:12px;">Success Stories — Real Matches</h2>
+        <p style="text-align:center;color:rgba(255,255,255,0.88);margin-top:-6px;margin-bottom:28px;max-width:920px;margin-left:auto;margin-right:auto;">
+          Athletes, coaches and sponsors share how Sporture helped overcome funding, coaching and awareness gaps — connecting talent to opportunity.
+        </p>
+
+        <div class="testimonials-wrap" aria-live="polite">
+          <button class="t-btn t-prev" aria-label="Previous testimonial">‹</button>
+
+          <div class="t-viewport" aria-hidden="false">
+            <div class="t-track">
+              <!-- Slide 1: Athlete -->
+              <article class="t-card" role="article" aria-label="Testimonial 1">
+                <div class="t-quote-mark">❝</div>
+                <div class="t-body">
+                  <div class="t-text">
+                    "Before Sporture I didn't know which programs I qualified for or where to find a coach. After verification I found a sponsor and a coach — I'm now training for the national trials."
+                  </div>
+                  <div class="t-person">
+                    <img class="t-avatar" src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&q=60" alt="Athlete portrait">
+                    <div class="t-meta">
+                      <div class="t-name">Neha S.</div>
+                      <div class="t-role">Long jumper</div>
+                    </div>
+                  </div>
+                </div>
+              </article>
+
+              <!-- Slide 2: Coach -->
+              <article class="t-card" role="article" aria-label="Testimonial 2">
+                <div class="t-quote-mark">❝</div>
+                <div class="t-body">
+                  <div class="t-text">
+                    "We saw verified profiles matching our training program and reached athletes who previously had no way to find specialized coaching. The results were immediate."
+                  </div>
+                  <div class="t-person">
+                    <img class="t-avatar" src="https://images.unsplash.com/photo-1607746882042-944635dfe10e?auto=format&fit=crop&w=200&q=60" alt="Coach portrait">
+                    <div class="t-meta">
+                      <div class="t-name">Rahul P.</div>
+                      <div class="t-role">Track & Field Coach</div>
+                    </div>
+                  </div>
+                </div>
+              </article>
+
+              <!-- Slide 3: Sponsor -->
+              <article class="t-card" role="article" aria-label="Testimonial 3">
+                <div class="t-quote-mark">❝</div>
+                <div class="t-body">
+                  <div class="t-text">
+                    "We were tired of low-quality leads. Sporture's verification reduced our screening time and let us sponsor athletes who truly needed financial support to progress."
+                  </div>
+                  <div class="t-person">
+                    <img class="t-avatar" src="https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?auto=format&fit=crop&w=200&q=60" alt="Sponsor portrait">
+                    <div class="t-meta">
+                      <div class="t-name">Amit R.</div>
+                      <div class="t-role">Sponsor, Rising Sports Fund</div>
+                    </div>
+                  </div>
+                </div>
+              </article>
+            </div>
+          </div>
+
+          <button class="t-btn t-next" aria-label="Next testimonial">›</button>
+        </div>
+
+        <div class="t-dots" role="tablist" aria-label="Testimonial navigation"></div>
+
+        <!-- small fallback contact info -->
+        <p style="text-align:center;color:rgba(255,255,255,0.78);margin-top:22px;">Have a story? Email <a href="mailto:hello@athletematch.example" style="color:#fff;text-decoration:underline;">hello@athletematch.example</a></p>
+      </div>
+    </section>
+
+
+    <!-- CONTACT section -->
+    <section class="slide" id="slide-contact" aria-label="Contact">
+      <div class="contact-wrap">
+        <h2 class="contact-title">CONTACT <span>GET IN TOUCH!</span></h2>
+
+        <div class="contact-grid">
+          <!-- Left side: Info -->
+          <div class="contact-info">
+            <div class="c-item">
+              <div class="c-icon">📍</div>
+              <div class="c-text">123 New Street Here, Wonderful City 10220</div>
+            </div>
+            <div class="c-item">
+              <div class="c-icon">📞</div>
+              <div class="c-text">+91 1234567891</div>
+            </div>
+            <div class="c-item">
+              <div class="c-icon">✉️</div>
+              <div class="c-text">hello@athletematch.example</div>
+            </div>
+          </div>
+
+          <!-- Right side: Form -->
+          <form class="contact-form">
+            <input type="text" name="name" placeholder="Name" required />
+            <input type="email" name="email" placeholder="Email" required />
+            <textarea name="message" placeholder="Message" required></textarea>
+            <button type="submit" class="btn-submit">SUBMIT</button>
+          </form>
+        </div>
+      </div>
+    </section>
+  </div>
+
+<script>
+  // safe: set footer year only if element exists
+  (function(){
+    const yearEl = document.getElementById('year');
+    if (yearEl) yearEl.innerText = new Date().getFullYear();
+  })();
+
+  // Basic scroll indicator logic (keeps behavior from prior file)
+  (function(){
+    const container = document.getElementById('slides');
+    const slides = Array.from(document.querySelectorAll('.slide'));
+    const indicator = document.getElementById('scrollIndicator');
+    const progress = document.getElementById('progressCircle');
+    // defensive: only run progress logic if SVG exists
+    if (progress) {
+      const C = 2*Math.PI*42;
+      progress.style.strokeDasharray = `${C}`;
+    }
+
+    function getIndex(){
+      const y = container.scrollTop + (window.innerHeight/2);
+      for(let i=0;i<slides.length;i++){
+        if(y >= slides[i].offsetTop && y < slides[i].offsetTop + slides[i].offsetHeight) return i;
+      }
+      return 0;
+    }
+    function update(){
+      if (!progress) return;
+      const idx = getIndex();
+      const s = slides[idx];
+      const top = s.offsetTop;
+      const h = s.offsetHeight;
+      const inside = Math.min(Math.max(container.scrollTop - top, 0), h);
+      const frac = inside / h;
+      progress.style.strokeDashoffset = (2*Math.PI*42) * (1 - frac);
+      // update dots active only on services slide for demo (static)
+      const dots = document.querySelectorAll('.cards-dots .dot');
+      dots.forEach((d,i)=> d.classList.toggle('active', i===0)); // keep first active (demo)
+    }
+    if (container) {
+      container.addEventListener('scroll', ()=> requestAnimationFrame(update), {passive:true});
+      setTimeout(update,200);
+    }
+    if (indicator) {
+      indicator.addEventListener('click', ()=> {
+        const idx = getIndex();
+        const next = Math.min(idx+1, slides.length-1);
+        slides[next].scrollIntoView({behavior:'smooth', block:'start'});
+      });
+    }
+  })();
+
+  // Testimonials slider (defensive selectors)
+  (function(){
+    const section = document.getElementById('slide-testimonials');
+    if(!section) return;
+
+    const track = section.querySelector('.t-track');
+    const slides = Array.from(section.querySelectorAll('.t-card'));
+    const dotsContainer = section.querySelector('.t-dots');
+    const prevBtn = section.querySelector('.t-prev') || section.querySelector('.t-btn.t-prev');
+    const nextBtn = section.querySelector('.t-next') || section.querySelector('.t-btn.t-next');
+
+    if(!track || slides.length === 0) return;
+
+    // Build dots if none exist
+    if (dotsContainer && dotsContainer.children.length === 0) {
+      slides.forEach((_, i) => {
+        const b = document.createElement('button');
+        b.setAttribute('aria-label', 'Go to testimonial ' + (i+1));
+        if(i===0) b.classList.add('active');
+        b.addEventListener('click', ()=> goTo(i));
+        dotsContainer.appendChild(b);
+      });
+    }
+
+    const dots = dotsContainer ? Array.from(dotsContainer.children) : [];
+
+    let idx = 0;
+    const total = slides.length;
+    const autoplayDelay = 4500;
+    let autoplayTimer = null;
+
+    function updateUI(){
+      track.style.transition = 'transform 520ms cubic-bezier(.2,.9,.25,1)';
+      track.style.transform = `translateX(${-idx*100}%)`;
+      if(dots.length) dots.forEach((d,i)=> d.classList.toggle('active', i===idx));
+    }
+
+    function goTo(i){
+      idx = ((i % total) + total) % total;
+      updateUI();
+    }
+    function next(){ goTo(idx + 1); }
+    function prev(){ goTo(idx - 1); }
+
+    function startAutoplay(){
+      if(autoplayTimer) clearInterval(autoplayTimer);
+      autoplayTimer = setInterval(()=> goTo(idx + 1), autoplayDelay);
+    }
+    function resetAutoplay(){ startAutoplay(); }
+
+    // init
+    goTo(0);
+    startAutoplay();
+
+    if (nextBtn) nextBtn.addEventListener('click', (e)=>{ e.preventDefault(); next(); resetAutoplay(); });
+    if (prevBtn) prevBtn.addEventListener('click', (e)=>{ e.preventDefault(); prev(); resetAutoplay(); });
+
+    // swipe support
+    const viewport = section.querySelector('.t-viewport');
+    if(viewport){
+      let startX = 0, deltaX = 0, isDown = false;
+      viewport.addEventListener('pointerdown', (ev)=>{ isDown = true; startX = ev.clientX; viewport.setPointerCapture(ev.pointerId); });
+      viewport.addEventListener('pointermove', (ev)=>{ if(!isDown) return; deltaX = ev.clientX - startX; track.style.transition='none'; track.style.transform = `translateX(${ -idx*100 + (deltaX / viewport.clientWidth) * 100 }%)`; });
+      viewport.addEventListener('pointerup', ()=>{ isDown=false; track.style.transition=''; if(Math.abs(deltaX) > (viewport.clientWidth * 0.16)){ if(deltaX < 0) next(); else prev(); } else goTo(idx); deltaX=0; resetAutoplay(); });
+      viewport.addEventListener('pointercancel', ()=>{ isDown=false; deltaX=0; goTo(idx); });
+    }
+
+    // keyboard left/right when section is focused
+    section.tabIndex = section.tabIndex || -1;
+    section.addEventListener('keydown', (e)=>{ if(e.key === 'ArrowLeft'){ prev(); resetAutoplay(); e.preventDefault(); } if(e.key === 'ArrowRight'){ next(); resetAutoplay(); e.preventDefault(); } });
+
+  })();
+
+  /* Contact form handler: prevent real submit, clear inputs and show a submitted message. */
+  (function(){
+    const form = document.querySelector('.contact-form');
+    if(!form) return;
+
+    // Create a feedback container to show the message (kept visually simple)
+    const feedback = document.createElement('div');
+    feedback.setAttribute('role','status');
+    feedback.setAttribute('aria-live','polite');
+    feedback.style.marginTop = '14px';
+    feedback.style.padding = '18px';
+    feedback.style.borderRadius = '10px';
+    feedback.style.background = 'rgba(255,255,255,0.06)';
+    feedback.style.color = '#fff';
+    feedback.style.fontWeight = '600';
+    feedback.style.display = 'none'; // hidden until used
+
+    // Insert feedback right after the form
+    form.parentNode.insertBefore(feedback, form.nextSibling);
+
+    form.addEventListener('submit', function(e){
+      e.preventDefault();
+
+      // Optional: grab name to personalize the message
+      const nameField = form.querySelector('input[name="name"]');
+      const name = nameField && nameField.value ? nameField.value.trim() : '';
+
+      // Clear fields
+      form.querySelectorAll('input, textarea').forEach(el => { el.value = ''; });
+
+      // hide form (but keep it in DOM in case you want to show it again)
+      form.style.display = 'none';
+
+      // Show the submitted message
+      feedback.innerHTML = `
+        <div style="font-size:1.05rem;line-height:1.4;">
+          ${name ? `Thanks, ${escapeHtml(name)} — ` : ''}Your message has been submitted.
+        </div>
+        <div style="margin-top:8px;color:rgba(255,255,255,0.86);font-size:0.95rem;">
+          We'll get back to you soon.
+        </div>`;
+      feedback.style.display = 'block';
+
+      // Optional: re-show form after 6s so user can send another message
+      setTimeout(() => {
+        feedback.style.display = 'none';
+        form.style.display = '';
+        const first = form.querySelector('input, textarea');
+        if(first) first.focus();
+      }, 6000);
+    });
+
+    function escapeHtml(str){
+      return str.replace(/[&<>"']/g, (m) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+    }
+  })();
+</script>
+
+
+</body>
+</html>

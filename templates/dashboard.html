@@ -1,0 +1,263 @@
+<!-- save as dashboard.html -->
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Feed — Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* same CSS from your original file */
+    :root{
+      --bg:#f6f8fa;
+      --card:#ffffff;
+      --muted:#97a0ad;
+      --accent:#2ea3ff;
+      --soft-shadow: 0 8px 30px rgba(14,30,37,0.06);
+      --soft-inset: 0 2px 0 rgba(255,255,255,0.6);
+      --radius:14px;
+      --maxwidth:1200px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;}
+    body{
+      background:linear-gradient(180deg,#f8fbff 0%,var(--bg) 100%);
+      display:flex;
+      justify-content:center;
+      padding:30px;
+      color:#182026;
+    }
+    .wrap{width:100%;max-width:var(--maxwidth);display:grid;grid-template-columns:240px 1fr 320px;gap:28px;align-items:start}
+    .left{background:transparent;position:sticky;top:28px;height:calc(100vh - 56px);display:flex;flex-direction:column;gap:18px}
+    .brand{display:flex;align-items:center;gap:10px;padding:8px 6px}
+    .brand .logo{width:34px;height:34px;border-radius:6px;background:linear-gradient(135deg,#2ea3ff,#6ad1ff);display:flex;align-items:center;justify-content:center;color:white;font-weight:700}
+    .nav{background:transparent;padding:10px;border-radius:12px;display:flex;flex-direction:column;gap:10px}
+    .nav a{display:flex;align-items:center;gap:12px;padding:10px;border-radius:12px;color:var(--muted);text-decoration:none;font-weight:500}
+    .nav a.active{background:linear-gradient(90deg,#f0f7ff,#fbfdff);box-shadow:var(--soft-shadow);color:#1976d2}
+    .nav a:hover{background:#fff;border-radius:12px;color:#1976d2}
+    .center{position:relative}
+    .composer{background:var(--card);border-radius:var(--radius);padding:18px;box-shadow:var(--soft-shadow);margin-bottom:22px}
+    .composer .top{display:flex;gap:12px;align-items:flex-start}
+    .avatar{width:48px;height:48px;border-radius:50%;background:#ddd;flex:0 0 48px;overflow:hidden}
+    .avatar img{width:100%;height:100%;object-fit:cover}
+    .composer textarea{width:100%;border:0;outline:none;resize:none;font-size:15px;padding:8px 10px;background:transparent;min-height:56px;color:#223344}
+    .composer .actions{display:flex;justify-content:space-between;align-items:center;margin-top:12px}
+    .btn{background:var(--accent);color:white;padding:10px 14px;border-radius:10px;border:0;font-weight:600;box-shadow:var(--soft-inset);cursor:pointer}
+    .post{background:var(--card);border-radius:var(--radius);box-shadow:var(--soft-shadow);padding:20px;margin-bottom:20px;overflow:visible}
+    .post .meta{display:flex;align-items:center;gap:12px}
+    .post .meta .name{font-weight:700;color:#0f3b57}
+    .post .meta .role{color:var(--muted);font-size:13px;margin-left:8px}
+    .post .body{margin-top:12px;color:#495b66;line-height:1.6}
+    .post .card-media{margin-top:14px;background:#f6f8fa;border-radius:10px;padding:12px;display:flex;gap:12px;align-items:center}
+    .post .card-media img{width:140px;height:92px;object-fit:cover;border-radius:8px;flex-shrink:0}
+    .post .card-media .media-meta{font-size:13px;color:#6b7b86}
+    .post .post-actions{display:flex;gap:18px;margin-top:14px;color:var(--muted);font-weight:600}
+    .right{position:sticky;top:28px;height:calc(100vh - 56px);display:flex;flex-direction:column;gap:18px}
+    .widget{background:var(--card);border-radius:12px;padding:16px;box-shadow:var(--soft-shadow)}
+    .widget h4{margin:0 0 8px 0;font-size:15px;color:#183046}
+    .sponsored img{width:100%;height:120px;object-fit:cover;border-radius:8px;margin-bottom:10px}
+    .people-list{display:flex;flex-direction:column;gap:10px}
+    .people-list .person{display:flex;align-items:center;gap:12px}
+    .person .pimg{width:40px;height:40px;border-radius:50%;overflow:hidden}
+    .person .pimg img{width:100%;height:100%;object-fit:cover}
+    .person .ptxt{font-size:14px}
+    .profile-card{text-align:center;padding:22px;border-radius:12px}
+    .profile-card img{width:92px;height:92px;border-radius:50%;border:6px solid #fff;margin-top:-64px;box-shadow:0 6px 24px rgba(14,30,37,0.08)}
+    .connect-btn{margin-top:12px;background:linear-gradient(90deg,#2ea3ff,#59c1ff);color:white;padding:10px;border-radius:999px;border:0;cursor:pointer;font-weight:700}
+    .progress-wrap{display:flex;align-items:center;gap:12px;padding:12px;border-radius:12px;background:linear-gradient(90deg,#ffffff,#fbfdff);box-shadow:var(--soft-shadow)}
+    .circle{width:86px;height:86px;border-radius:50%;background:conic-gradient(#2ea3ff var(--p,75%), #e9eef3 0%);display:flex;align-items:center;justify-content:center;font-weight:700;color:#2b3b44}
+    .progress-text{font-size:13px;color:var(--muted)}
+    @media (max-width:1100px){.wrap{grid-template-columns:200px 1fr;gap:18px}.right{display:none}}
+    @media (max-width:700px){.wrap{grid-template-columns:1fr; padding:0 12px;}.left{display:flex;flex-direction:row;gap:8px;overflow:auto;height:auto}.left .nav{flex-direction:row}.left .nav a{white-space:nowrap;padding:8px}}
+    .muted{color:var(--muted);font-size:13px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+
+    <!-- LEFT -->
+    <aside class="left">
+      <div class="brand">
+        <div class="logo">S</div>
+        <div style="font-weight:700">Sporture</div>
+      </div>
+
+      <div class="nav">
+        <a class="active">Feed</a>
+        <a>Athletes</a>
+        <a>Sponsors</a>
+        <a>Coaches</a>
+        <a>Applications</a>
+        <a>Messages <span style="background:#e6f2ff;color:#1976d2;padding:3px 8px;border-radius:999px;margin-left:auto;font-weight:700">2</span></a>
+        <a style="margin-top:12px;color:var(--muted)">Settings</a>
+        <a style="color:var(--muted)">Help</a>
+      </div>
+
+      <div style="flex:1"></div>
+
+      <div class="widget progress-wrap">
+        <div class="circle" id="profileCircle" style="--p:50%">50%</div>
+        <div class="progress-text">
+          <div style="font-weight:700">50% COMPLETE</div>
+          <div class="muted" style="margin-top:8px">Add achievements to boost your profile visibility</div>
+          <a href="#" class="muted" style="display:inline-block;margin-top:8px;color:var(--accent);font-weight:700;text-decoration:none">Complete profile</a>
+        </div>
+      </div>
+    </aside>
+
+    <!-- CENTER -->
+    <main class="center">
+
+      <!-- composer -->
+      <div class="composer" id="composer">
+        <div class="top">
+          <div class="avatar"><img src="https://randomuser.me/api/portraits/men/21.jpg" alt=""></div>
+          <div style="flex:1">
+            <textarea id="postText" placeholder="Share your achievement or opportunity..."></textarea>
+            <div style="display:flex;gap:8px;margin-top:8px">
+              <button class="btn" id="postBtn">Post →</button>
+              <div style="display:flex;gap:8px;align-items:center;margin-left:8px;color:var(--muted)">
+                <span style="font-weight:600">Update the community</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- feed -->
+      <div id="feed">
+        <!-- Athlete post -->
+        <article class="post">
+          <div class="meta">
+            <div class="avatar" style="width:56px;height:56px"><img src="https://randomuser.me/api/portraits/men/45.jpg" alt=""></div>
+            <div>
+              <div><span class="name">Rahul Mehta</span> <span class="role muted">— Athlete (Boxing)</span></div>
+              <div class="muted" style="font-size:13px;margin-top:6px">1d • Verified Athlete</div>
+            </div>
+          </div>
+          <div class="body">
+            Excited to share that I won Gold in the State Boxing Championship 🥇. Looking for sponsorship to prepare for Nationals!
+          </div>
+          <div style="display:flex;justify-content:flex-end;margin-top:10px">
+            <div style="background:#fff;padding:8px 12px;border-radius:999px;box-shadow:var(--soft-shadow);font-weight:700;color:var(--muted)">Sponsor ➜</div>
+          </div>
+        </article>
+
+        <!-- Sponsor post -->
+        <article class="post">
+          <div class="meta">
+            <div class="avatar" style="width:56px;height:56px"><img src="https://randomuser.me/api/portraits/women/60.jpg" alt=""></div>
+            <div>
+              <div><span class="name">Neha Kapoor</span> <span class="role muted">— Sponsor, Nike India</span></div>
+              <div class="muted" style="font-size:13px;margin-top:6px">2d</div>
+            </div>
+          </div>
+
+          <div class="body">
+            We are looking to support young athletes in athletics and basketball 🏀. Verified athletes can apply through Sporture.
+          </div>
+
+          <div class="card-media">
+            <img src="https://images.unsplash.com/photo-1521412644187-c49fa049e84d?w=900&q=60" alt="">
+            <div class="media-meta">
+              <div style="font-weight:700;color:#0f3b57">Nike Rising Stars Program</div>
+              <div class="muted" style="margin-top:8px">Helping athletes achieve their dreams through financial and training support.</div>
+              <div class="muted" style="margin-top:10px;font-size:12px">Deadline: Oct 30, 2025</div>
+            </div>
+          </div>
+
+          <div class="post-actions">
+            <div>Like</div>
+            <div>Comment</div>
+            <div>Apply</div>
+          </div>
+        </article>
+
+        <!-- Coach post -->
+        <article class="post">
+          <div class="meta">
+            <div class="avatar" style="width:56px;height:56px"><img src="https://randomuser.me/api/portraits/men/52.jpg" alt=""></div>
+            <div>
+              <div><span class="name">Coach Arjun</span> <span class="role muted">— Athletics Coach</span></div>
+              <div class="muted" style="font-size:13px;margin-top:6px">3d</div>
+            </div>
+          </div>
+
+          <div class="body">
+            I’m opening slots for 5 athletes preparing for international trials. Training includes nutrition, fitness, and personalized coaching. DM to apply!
+          </div>
+          <div class="post-actions">
+            <div>Like</div>
+            <div>Comment</div>
+            <div>Contact</div>
+          </div>
+        </article>
+      </div>
+    </main>
+
+    <!-- RIGHT -->
+    <aside class="right">
+      <div class="widget sponsored">
+        <img src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=900&q=60" alt="">
+        <h4 class="muted">Sponsored</h4>
+        <div style="font-weight:700">Adidas Young Champs</div>
+        <div class="muted" style="margin-top:8px;font-size:13px">Scholarships for under-18 athletes across India. Apply today!</div>
+      </div>
+
+      <div class="widget">
+        <h4>Athletes you may know</h4>
+        <div class="people-list">
+          <div class="person"><div class="pimg"><img src="https://randomuser.me/api/portraits/men/31.jpg" alt=""></div><div class="ptxt"><strong>Amit Sharma</strong><div class="muted">Sprinter</div></div></div>
+          <div class="person"><div class="pimg"><img src="https://randomuser.me/api/portraits/women/44.jpg" alt=""></div><div class="ptxt"><strong>Pooja Reddy</strong><div class="muted">Badminton Player</div></div></div>
+          <div class="person"><div class="pimg"><img src="https://randomuser.me/api/portraits/men/32.jpg" alt=""></div><div class="ptxt"><strong>Karan Verma</strong><div class="muted">Swimmer</div></div></div>
+        </div>
+      </div>
+
+      <div class="widget profile-card">
+        <div style="height:64px;background:linear-gradient(90deg,#2ea3ff,#59c1ff);border-radius:10px;"></div>
+        <img src="https://randomuser.me/api/portraits/men/11.jpg" alt="">
+        <h4 style="margin:12px 0 4px 0">You</h4>
+        <div class="muted">Athlete — Complete your profile</div>
+        <button class="connect-btn">Update Profile</button>
+      </div>
+    </aside>
+
+  </div>
+
+  <script>
+    const postBtn = document.getElementById('postBtn');
+    const postText = document.getElementById('postText');
+    const feed = document.getElementById('feed');
+
+    postBtn.addEventListener('click', () => {
+      const text = postText.value.trim();
+      if(!text) return alert('Write something first 🙂');
+
+      const article = document.createElement('article');
+      article.className = 'post';
+      article.innerHTML = `
+        <div class="meta">
+          <div class="avatar" style="width:56px;height:56px"><img src="https://randomuser.me/api/portraits/men/21.jpg" alt=""></div>
+          <div>
+            <div><span class="name">You</span> <span class="role muted">— Athlete</span></div>
+            <div class="muted" style="font-size:13px;margin-top:6px">Just now</div>
+          </div>
+        </div>
+        <div class="body">${escapeHtml(text)}</div>
+        <div class="post-actions">
+          <div>Like</div>
+          <div>Comment</div>
+          <div>Share</div>
+        </div>
+      `;
+      feed.insertBefore(article, feed.firstChild);
+      postText.value = '';
+    });
+
+    function escapeHtml(str){
+      return str.replace(/[&<>"'`=\/]/g, function(s){ 
+        return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','/':'&#x2F;','`':'&#x60;','=':'&#x3D;'})[s];});
+    }
+  </script>
+</body>
+</html>
