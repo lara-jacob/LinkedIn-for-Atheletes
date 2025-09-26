@@ -13,16 +13,17 @@
       justify-content: center;
       align-items: center;
       height: 100vh;
-      background: linear-gradient(to right, #e3f2fd, #f3e5f5);
+      background: linear-gradient(to right, #33a8d8, #16c6b7);
     }
 
     .container {
       display: flex;
-      width: 950px;
-      background: white;
+      width: 750px;
+      background: rgba(255, 255, 255, 0.272);
       border-radius: 12px;
       overflow: hidden;
       box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      
     }
 
     /* Left Login Section */
@@ -123,19 +124,19 @@
 
     /* Modal for Registration */
     .modal {
-      display: none;
-      position: fixed;
-      z-index: 10;
-      left: 0; top: 0;
-      width: 100%; height: 100%;
-      background: rgba(0,0,0,0.6);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
+  display: none;  /* hidden initially */
+  position: fixed;
+  z-index: 10;
+  left: 0; top: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.6);
+  justify-content: center;
+  align-items: center;
+}
+
 
     .modal-content {
-      background: white;
+      background: rgba(255, 255, 255, 0.062);
       padding: 25px;
       border-radius: 12px;
       width: 350px;
@@ -148,10 +149,34 @@
       cursor: pointer;
       color: red;
     }
+
+    .nav { position:fixed; top:18px; left:18px; right:18px; z-index:70; display:flex; align-items:center; justify-content:space-between; pointer-events:auto; }
+    .brand { display:flex; gap:12px; align-items:center; }
+    .logo { width:56px; height:56px; border-radius:6px; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,var(--accent),var(--accent-2)); color:#042; font-family:"Playfair Display",serif; font-weight:700; font-size:18px; }
+    .brand .name { color:var(--muted); font-weight:700; letter-spacing:1px; text-decoration: none }
+    .nav-links { display:flex; gap:12px; align-items:center; }
+    .nav-links a { color: white; padding:6px 10px; border-radius:6px;  text-decoration: none; }
+    .nav-links a.active, .nav-links a:hover { color:#fff; background: rgba(255,255,255,0.03); }
+    .nav-links a.active,
+    .nav-links a:hover {color: white;background: rgba(255,255,255,0.15); }
   </style>
 </head>
 <body>
+
+  <div class="nav" role="navigation" aria-label="Main nav">
+        <div class="brand" aria-label="Brand">
+          <div class="name" style="font-weight:700; font-size:1.4rem; color:#fff;">SPORTURE</div>
+        </div>
+        <nav class="nav-links">
+          <a href="/" >Home</a>
+          <a href="#slide-about">About Us</a>
+          <a href="/login_page" class="active">Login/Register</a>
+          <a href="#slide-contact">Contact Me</a>
+        </nav>
+      </div>
+
   <div class="container">
+    
     <!-- Left Section -->
     <div class="login-section">
       <h2>Welcome Back!</h2>
@@ -174,7 +199,7 @@
 
     <!-- Right Section -->
     <div class="visual-section">
-      <img src="https://via.placeholder.com/250x250.png?text=Athlete+App" id="defaultImage" alt="Athlete Illustration">
+      <img src="https://t4.ftcdn.net/jpg/02/58/94/23/240_F_258942359_KKkwWxwWHpSyfzkX0wFeUZIJK9jvGwMQ.jpg" id="defaultImage" alt="Athlete">
       <div class="hexagon" id="statusIcon">?</div>
       <div class="status-message" id="statusMessage"></div>
     </div>
@@ -190,12 +215,15 @@
           <input type="email" id="regEmail" placeholder="Email" required>
         </div>
         <div class="form-group">
+          <input type="Name" id="regName" placeholder="Full Name" required>
+        </div>
+        <div class="form-group">
           <input type="password" id="regPassword" placeholder="Password" required minlength="6">
         </div>
         <div class="form-group">
           <select id="regType" required>
             <option value="">Select Type</option>
-            <option value="user">User</option>
+            <option value="user">Athlete</option>
             <option value="sponsor">Sponsor</option>
             <option value="coach">Coach</option>
           </select>
