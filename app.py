@@ -17,7 +17,7 @@ def get_db_connection():
         host="localhost",
         database="sporture",
         user="postgres",
-        password="12345",
+        password="1234",
         port=5432
     )
 
@@ -44,6 +44,10 @@ def adminlogin():
 @app.route("/manage_users")
 def manage_users():
     return render_template("manage_users.html")  
+
+@app.route("/application_approval")
+def application_approval():
+    return render_template("application_approval.html") 
 
 # Register: now accepts optional display name fields (full_name / name / contact_person)
 @app.route("/register", methods=["POST"])
@@ -570,6 +574,35 @@ def delete_user(user_type, user_id):
     finally:
         cur.close()
         conn.close()
+
+@app.route('/get_pending_applications')
+def get_pending_applications():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM applications WHERE status='Pending'")
+    apps = cur.fetchall()
+    # Convert to JSON-friendly dict list
+    keys = [desc[0] for desc in cur.description]
+    result = [dict(zip(keys, row)) for row in apps]
+    return jsonify(result)
+
+@app.route('/update_application_status/<int:app_id>', methods=['POST'])
+def update_application_status(app_id):
+    data = request.get_json()
+    status = data['status']
+    app_type = data.get('type', None)
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("UPDATE applications SET status=%s WHERE id=%s", (status, app_id))
+    conn.commit()
+
+    # Optional: if approved, make it visible to coaches/sponsors
+    if status == 'Forwarded' and app_type:
+        table_name = 'coaches' if app_type=='Coach' else 'sponsors'
+        # Insert into another table or notify them as needed
+
+    return jsonify({"success": True})
+
 
 if __name__ == "__main__":
     app.run(debug=True)
