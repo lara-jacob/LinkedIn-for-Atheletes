@@ -17,7 +17,7 @@ def get_db_connection():
         host="localhost",
         database="sporture",
         user="postgres",
-        password="1234",
+        password="12345",
         port=5432
     )
 
@@ -400,44 +400,46 @@ def profile_page():
 
 @app.route("/update_profile/athlete", methods=["POST"])
 def update_profile_athlete():
-    # require login
     if "email" not in session or session.get("user_type") != "athlete":
         return redirect(url_for("login_page"))
 
     email = session["email"]
-    # read form fields (names from your template)
+
     full_name = request.form.get("full_name")
-    nick_name = request.form.get("nick_name")
+    age = request.form.get("age")
     gender = request.form.get("gender")
+    sport = request.form.get("sport")
+    achievements = request.form.get("achievements")
+    ranking = request.form.get("ranking")
+    experience_years = request.form.get("experience_years")
+    contact_number = request.form.get("contact_number")
     location = request.form.get("location")
-    language = request.form.get("language")
-    time_zone = request.form.get("time_zone")
 
     try:
         conn = get_db_connection()
         cur = conn.cursor()
         cur.execute("""
             UPDATE athletes
-            SET full_name = %s,
-                -- optional column nick_name may not exist in your schema; add or remove as needed
-                nick_name = %s,
-                gender = %s,
-                location = %s,
-                language = %s,
-                time_zone = %s
-            WHERE email = %s
-        """, (full_name, nick_name, gender, location, language, time_zone, email))
+            SET full_name=%s,
+                age=%s,
+                gender=%s,
+                sport=%s,
+                achievements=%s,
+                ranking=%s,
+                experience_years=%s,
+                contact_number=%s,
+                location=%s
+            WHERE email=%s
+        """, (full_name, age, gender, sport, achievements, ranking, experience_years, contact_number, location, email))
         conn.commit()
     except Exception as e:
         logging.exception("Error updating athlete profile")
     finally:
-        try:
-            cur.close()
-            conn.close()
-        except:
-            pass
+        cur.close()
+        conn.close()
 
     return redirect(url_for("profile_page"))
+
 
 
 @app.route("/update_profile/coach", methods=["POST"])
@@ -470,11 +472,8 @@ def update_profile_coach():
     except Exception as e:
         logging.exception("Error updating coach profile")
     finally:
-        try:
-            cur.close()
-            conn.close()
-        except:
-            pass
+        cur.close()
+        conn.close()
 
     return redirect(url_for("profile_page"))
 
@@ -507,13 +506,12 @@ def update_profile_sponsor():
     except Exception as e:
         logging.exception("Error updating sponsor profile")
     finally:
-        try:
-            cur.close()
-            conn.close()
-        except:
-            pass
+        cur.close()
+        conn.close()
 
     return redirect(url_for("profile_page"))
+
+
 @app.route("/get_users")
 def get_users():
     user_type = request.args.get("type")  # athlete, coach, sponsor
