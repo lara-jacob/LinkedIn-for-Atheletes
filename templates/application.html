@@ -1,79 +1,172 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Athlete Application</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: linear-gradient(to right, #33a8d8, #16c6b7);
-      margin: 0;
-      padding: 0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-    }
-    .container {
-      background: rgba(255, 255, 255, 0.95);
-      padding: 30px;
-      border-radius: 12px;
-      max-width: 600px;
-      width: 100%;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-    }
-    h2 {
-      text-align: center;
-      margin-bottom: 20px;
-      color: #222;
-    }
-    .form-group {
-      margin-bottom: 15px;
-    }
-    label {
-      font-weight: bold;
-      display: block;
-      margin-bottom: 6px;
-      color: #333;
-    }
-    input, select, textarea {
-      width: 100%;
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      font-size: 14px;
-    }
-    textarea {
-      resize: vertical;
-      min-height: 80px;
-    }
-    button {
-      width: 100%;
-      padding: 12px;
-      background: #16c6b7;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      font-size: 16px;
-      cursor: pointer;
-      font-weight: bold;
-    }
-    button:hover {
-      background: #129a8e;
-    }
-    .message {
-      margin-top: 15px;
-      text-align: center;
-      font-weight: bold;
-    }
-    .success { color: green; }
-    .error { color: red; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Athlete Application</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: linear-gradient(to right, #33a8d8, #16c6b7);
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  /* Background + Overlay */
+  .bg-image {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background-image: url('/static/loginbg.jpg');
+    background-size: cover;
+    background-position: center;
+  }
+
+  .overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    background: linear-gradient(to bottom, #33a9d88e, #16c6b781);
+  }
+
+  .nav {
+    position: fixed;
+    top: 18px;
+    left: 18px;
+    right: 18px;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .brand .name {
+    color: #fff;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-decoration: none;
+    font-size: 1.2rem;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .nav-links a {
+    color: white;
+    padding: 4px 8px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 0.9rem;
+  }
+
+  .nav-links a:hover {
+    background: rgba(255,255,255,0.15);
+  }
+
+  .logout-btn {
+    background: transparent;
+    border: none;
+    color: white;
+    padding: 5px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background 0.3s;
+  }
+  .logout-btn:hover { background: rgba(255,255,255,0.15); }
+
+  .container {
+    position: relative;
+    z-index: 5;
+    background: rgba(255, 255, 255, 0.35);
+    padding: 25px 30px;
+    border-radius: 12px;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    margin: 80px auto 80px;
+    backdrop-filter: blur(8px);
+  }
+
+  h2 {
+    text-align: center;
+    margin-bottom: 15px;
+    color: #222;
+    font-size: 1.4rem;
+  }
+
+  .form-group { margin-bottom: 12px; }
+  label {
+    font-weight: bold;
+    display: block;
+    margin-bottom: 4px;
+    color: #333;
+    font-size: 0.9rem;
+  }
+
+  input, select, textarea {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 0.85rem;
+  }
+
+  textarea { resize: vertical; min-height: 60px; }
+
+  button[type="submit"] {
+    width: 100%;
+    padding: 10px;
+    background: #16c6b7;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    cursor: pointer;
+    font-weight: bold;
+    margin-top: 8px;
+  }
+  button[type="submit"]:hover { background: #129a8e; }
+
+  .message {
+    margin-top: 10px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 0.9rem;
+  }
+
+  .success { color: green; }
+  .error { color: red; }
+
+</style>
 </head>
 <body>
+
+  <!-- Background + Overlay -->
+  <div class="bg-image"></div>
+  <div class="overlay"></div>
+
+  <div class="nav" role="navigation" aria-label="Main nav">
+    <div class="brand" aria-label="Brand">
+      <div class="name">SPORTURE</div>
+    </div>
+    <nav class="nav-links">
+      <a href="#slide-contact">Back</a>
+      <button class="logout-btn" onclick="logout()">Logout</button>
+    </nav>
+  </div>
+
   <div class="container">
-    <h2>Athlete Application Form</h2>
+    <h2>Athlete Application</h2>
     <form id="applicationForm">
       <div class="form-group">
         <label for="athlete_name">Full Name</label>
@@ -124,50 +217,55 @@
         <label for="supporting_docs">Supporting Documents (links)</label>
         <input type="text" id="supporting_docs" placeholder="Google Drive / Dropbox link">
       </div>
-      <button type="submit">Submit Application</button>
+      <button type="submit">Submit</button>
     </form>
     <div id="formMessage" class="message"></div>
   </div>
 
-  <script>
-    document.getElementById("applicationForm").addEventListener("submit", function(e) {
-      e.preventDefault();
+<script>
+function logout() {
+  // Redirect to login page
+  window.location.href = "/login_page";
+}
 
-      const data = {
-        athlete_name: document.getElementById("athlete_name").value,
-        age: document.getElementById("age").value,
-        gender: document.getElementById("gender").value,
-        sport: document.getElementById("sport").value,
-        location: document.getElementById("location").value,
-        application_type: document.getElementById("application_type").value,
-        achievements: document.getElementById("achievements").value,
-        motivation: document.getElementById("motivation").value,
-        goals: document.getElementById("goals").value,
-        supporting_docs: document.getElementById("supporting_docs").value
-      };
+document.getElementById("applicationForm").addEventListener("submit", function(e) {
+  e.preventDefault();
+  const data = {
+    athlete_name: document.getElementById("athlete_name").value,
+    age: document.getElementById("age").value,
+    gender: document.getElementById("gender").value,
+    sport: document.getElementById("sport").value,
+    location: document.getElementById("location").value,
+    application_type: document.getElementById("application_type").value,
+    achievements: document.getElementById("achievements").value,
+    motivation: document.getElementById("motivation").value,
+    goals: document.getElementById("goals").value,
+    supporting_docs: document.getElementById("supporting_docs").value
+  };
 
-      fetch("/submit_application", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data)
-      })
-      .then(res => res.json())
-      .then(response => {
-        const msgDiv = document.getElementById("formMessage");
-        if (response.success) {
-          msgDiv.textContent = response.message;
-          msgDiv.className = "message success";
-          document.getElementById("applicationForm").reset();
-        } else {
-          msgDiv.textContent = response.message;
-          msgDiv.className = "message error";
-        }
-      })
-      .catch(err => {
-        document.getElementById("formMessage").textContent = "Error submitting application.";
-        document.getElementById("formMessage").className = "message error";
-      });
-    });
-  </script>
+  fetch("/submit_application", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data)
+  })
+  .then(res => res.json())
+  .then(response => {
+    const msgDiv = document.getElementById("formMessage");
+    if (response.success) {
+      msgDiv.textContent = response.message;
+      msgDiv.className = "message success";
+      document.getElementById("applicationForm").reset();
+    } else {
+      msgDiv.textContent = response.message;
+      msgDiv.className = "message error";
+    }
+  })
+  .catch(err => {
+    document.getElementById("formMessage").textContent = "Error submitting application.";
+    document.getElementById("formMessage").className = "message error";
+  });
+});
+</script>
+
 </body>
 </html>
