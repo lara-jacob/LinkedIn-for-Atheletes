@@ -16,6 +16,24 @@
       background: linear-gradient(to right, #33a8d8, #16c6b7);
     }
 
+    .bg-image {
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+            background-image: url('/static/bg.jpg');
+            background-size: cover;
+            background-position: center;
+        }
+
+        /* Overlay on top of background */
+        .overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    /* Gradient overlay: top dark to transparent at bottom */
+    background: linear-gradient(to bottom, #33a9d88e, #16c6b781);
+}
+
     .container {
       display: flex;
       width: 750px;
@@ -161,7 +179,11 @@
     .nav-links a:hover {color: white;background: rgba(255,255,255,0.15); }
   </style>
 </head>
+
+
 <body>
+
+   
 
   <div class="nav" role="navigation" aria-label="Main nav">
         <div class="brand" aria-label="Brand">
