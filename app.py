@@ -4,6 +4,7 @@ from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
 import logging
+from flask import abort
 # near your app setup
 logging.basicConfig(level=logging.DEBUG)
 
@@ -260,6 +261,201 @@ def dashboard_page():
         profile_pct=profile_pct
     )
 
+
+@app.route("/profile")
+def profile_page():
+    # require login
+    if "email" not in session or "user_type" not in session:
+        return redirect(url_for("login_page"))
+
+    email = session["email"]
+    user_type = session["user_type"]
+    display_name = session.get("display_name", email.split("@")[0])
+    avatar_url = session.get("avatar_url") or f"https://avatars.dicebear.com/api/identicon/{display_name}.svg?scale=85"
+
+    # fetch current user data from DB so template fields are populated
+    conn = get_db_connection()
+    cur = conn.cursor()
+    user = {}
+    try:
+        if user_type == "athlete":
+            cur.execute("""
+                SELECT full_name, age, gender, sport, achievements, ranking, experience_years, contact_number, location
+                FROM athletes WHERE email=%s
+            """, (email,))
+            row = cur.fetchone()
+            if row:
+                user = {
+                    "full_name": row[0],
+                    "age": row[1],
+                    "gender": row[2],
+                    "sport": row[3],
+                    "achievements": row[4],
+                    "ranking": row[5],
+                    "experience_years": row[6],
+                    "contact_number": row[7],
+                    "location": row[8],
+                }
+
+        elif user_type == "coach":
+            cur.execute("""
+                SELECT full_name, specialization, certifications, experience_years, contact_number, location
+                FROM coaches WHERE email=%s
+            """, (email,))
+            row = cur.fetchone()
+            if row:
+                user = {
+                    "full_name": row[0],
+                    "specialization": row[1],
+                    "certifications": row[2],
+                    "experience_years": row[3],
+                    "contact_number": row[4],
+                    "location": row[5],
+                }
+
+        elif user_type == "sponsor":
+            cur.execute("""
+                SELECT name, contact_person, sport, contact_number, location
+                FROM sponsors WHERE email=%s
+            """, (email,))
+            row = cur.fetchone()
+            if row:
+                user = {
+                    "name": row[0],
+                    "contact_person": row[1],
+                    "sport": row[2],
+                    "contact_number": row[3],
+                    "location": row[4],
+                }
+
+    finally:
+        cur.close()
+        conn.close()
+
+    return render_template(
+        "profile.html",
+        user=user,
+        user_role=user_type,
+        display_name=display_name,
+        avatar_url=avatar_url
+    )
+
+@app.route("/update_profile/athlete", methods=["POST"])
+def update_profile_athlete():
+    # require login
+    if "email" not in session or session.get("user_type") != "athlete":
+        return redirect(url_for("login_page"))
+
+    email = session["email"]
+    # read form fields (names from your template)
+    full_name = request.form.get("full_name")
+    nick_name = request.form.get("nick_name")
+    gender = request.form.get("gender")
+    location = request.form.get("location")
+    language = request.form.get("language")
+    time_zone = request.form.get("time_zone")
+
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            UPDATE athletes
+            SET full_name = %s,
+                -- optional column nick_name may not exist in your schema; add or remove as needed
+                nick_name = %s,
+                gender = %s,
+                location = %s,
+                language = %s,
+                time_zone = %s
+            WHERE email = %s
+        """, (full_name, nick_name, gender, location, language, time_zone, email))
+        conn.commit()
+    except Exception as e:
+        logging.exception("Error updating athlete profile")
+    finally:
+        try:
+            cur.close()
+            conn.close()
+        except:
+            pass
+
+    return redirect(url_for("profile_page"))
+
+
+@app.route("/update_profile/coach", methods=["POST"])
+def update_profile_coach():
+    if "email" not in session or session.get("user_type") != "coach":
+        return redirect(url_for("login_page"))
+
+    email = session["email"]
+    full_name = request.form.get("full_name")
+    specialization = request.form.get("specialization")
+    certifications = request.form.get("certifications")
+    experience_years = request.form.get("experience_years")
+    contact_number = request.form.get("contact_number")
+    location = request.form.get("location")
+
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            UPDATE coaches
+            SET full_name=%s,
+                specialization=%s,
+                certifications=%s,
+                experience_years=%s,
+                contact_number=%s,
+                location=%s
+            WHERE email=%s
+        """, (full_name, specialization, certifications, experience_years, contact_number, location, email))
+        conn.commit()
+    except Exception as e:
+        logging.exception("Error updating coach profile")
+    finally:
+        try:
+            cur.close()
+            conn.close()
+        except:
+            pass
+
+    return redirect(url_for("profile_page"))
+
+
+@app.route("/update_profile/sponsor", methods=["POST"])
+def update_profile_sponsor():
+    if "email" not in session or session.get("user_type") != "sponsor":
+        return redirect(url_for("login_page"))
+
+    email = session["email"]
+    name = request.form.get("name")
+    contact_person = request.form.get("contact_person")
+    sport = request.form.get("sport")
+    contact_number = request.form.get("contact_number")
+    location = request.form.get("location")
+
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            UPDATE sponsors
+            SET name=%s,
+                contact_person=%s,
+                sport=%s,
+                contact_number=%s,
+                location=%s
+            WHERE email=%s
+        """, (name, contact_person, sport, contact_number, location, email))
+        conn.commit()
+    except Exception as e:
+        logging.exception("Error updating sponsor profile")
+    finally:
+        try:
+            cur.close()
+            conn.close()
+        except:
+            pass
+
+    return redirect(url_for("profile_page"))
 
 if __name__ == "__main__":
     app.run(debug=True)

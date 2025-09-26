@@ -231,28 +231,16 @@
         <!-- profile card avatar will be set by JS to one of the vecteezy avatars -->
         <img data-seed="{{ display_name|e }}" src="{{ avatar_url }}" alt="Profile avatar">
         <h4 style="margin:12px 0 4px 0">{{ display_name }}</h4>
-        <div class="muted">{{ role_label }} — Complete your profile</div>
-        <button class="connect-btn">Update Profile</button>
+        <div class="muted">  Complete</div>
+
+        <a href="/profile" class="connect-btn">Update Profile</a>
+
       </div>
     </aside>
 
   </div>
 
   <script>
-    /**
-     * Avatar mapping:
-     * - Use the three vecteezy avatars you requested (host them under /static/avatars/)
-     * - Map each user deterministically to one of the three images using a simple hash
-     * - Fallback: DiceBear identicon if local files are not present
-     *
-     * NOTE: Please download your three images into:
-     *   /static/avatars/avatar1.png
-     *   /static/avatars/avatar2.png
-     *   /static/avatars/avatar3.png
-     *
-     * If you cannot host them, the script will fall back to a generated identicon.
-     */
-
     // list of local avatar paths (preferred). Adjust path if your static folder differs.
     const hostedAvatars = [
       '/static/p1.jpg', // vecteezy avatar 1 (spectacles guy)

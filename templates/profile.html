@@ -1,0 +1,333 @@
+<!-- templates/profile.html -->
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Profile — Sporture</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg: #f5f8fb;
+      --card: #ffffff;
+      --muted: #98a3ad;
+      --accent: #2b78ff;
+      --accent-soft: linear-gradient(90deg,#cfe9ff, #fff4da);
+      --radius: 14px;
+    }
+    *{box-sizing:border-box}
+    body{font-family:Inter,system-ui,Arial; margin:0; background:var(--bg); color:#123246}
+    .app{
+      max-width:1180px;
+      margin:28px auto;
+      padding:18px;
+    }
+
+    /* Outer panel */
+    .panel{
+      background:var(--card);
+      border-radius:16px;
+      box-shadow:0 10px 30px rgba(14,30,37,0.06);
+      overflow:hidden;
+    }
+
+    /* banner */
+    .banner{
+      height:110px;
+      background: linear-gradient(90deg,#b6ddff 0%, #e7f8ff 45%, #fff6e8 100%);
+      padding:22px 28px;
+      border-top-left-radius:16px;
+      border-top-right-radius:16px;
+    }
+
+    /* top row with avatar + meta + edit button */
+    .top-row{
+      display:flex;
+      gap:20px;
+      align-items:center;
+      padding:18px 34px;
+      transform: translateY(-48px); /* lift card area to overlap banner */
+    }
+    .avatar-wrap{width:96px; height:96px; flex:0 0 96px}
+    .avatar{
+      width:96px; height:96px; border-radius:50%;
+      object-fit:cover; border:6px solid #fff;
+      box-shadow:0 8px 28px rgba(14,30,37,0.08); background:#f1f7fb;
+      display:block;
+    }
+    .meta{
+      flex:1;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      gap:6px;
+    }
+    .meta h1{margin:0; font-size:20px; letter-spacing:0.1px}
+    .meta .email{color:var(--muted); font-size:14px; margin-top:2px}
+
+    .actions{
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .btn-edit{
+      background:var(--accent); color:#fff; border:0; padding:10px 14px;
+      border-radius:10px; font-weight:700; cursor:pointer;
+      box-shadow:0 4px 0 rgba(0,0,0,0.03);
+    }
+
+    /* content area */
+    .content{
+      padding:22px 34px 36px;
+    }
+
+    /* Two-column grid for fields */
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:18px 36px;
+    }
+    .field{
+      display:flex; flex-direction:column;
+    }
+    .field label{font-weight:600; font-size:13px; color:#223344; margin-bottom:8px}
+    .field input, .field select, .field textarea{
+      padding:14px 12px; border-radius:10px; border:1px solid #eef3f6;
+      background:#fbfdff; font-size:14px; color:#203241;
+      outline:none;
+    }
+    .field input[readonly], .field select[disabled], .field textarea[readonly]{
+      background:#fbfbfb; color:#9aa6af;
+    }
+    .field select{appearance:none; background-image:linear-gradient(45deg, transparent 50%, #9aa6af 50%), linear-gradient(135deg, #9aa6af 50%, transparent 50%); background-position:calc(100% - 12px) calc(1em + 2px), calc(100% - 7px) calc(1em + 2px); background-size:6px 6px,6px 6px; background-repeat:no-repeat; padding-right:36px}
+
+    .two-col-title{margin-top:14px; font-weight:700; color:#223344}
+
+    /* email list */
+    .email-block{margin-top:22px}
+    .email-list{background:#fbfdff; border:1px solid #f1f6f9; border-radius:10px; padding:14px}
+    .email-item{display:flex; gap:12px; align-items:center; padding:8px 6px}
+    .email-badge{
+      width:40px; height:40px; border-radius:50%; background:#e8f7ff; display:flex;
+      align-items:center; justify-content:center; font-weight:700; color:var(--accent);
+    }
+    .email-meta .em{font-weight:700}
+    .email-meta .sub{color:var(--muted); font-size:13px; margin-top:4px}
+
+    .add-email{display:inline-block; margin-top:12px; padding:8px 12px; border-radius:8px; background:#e9f6ff; color:var(--accent); font-weight:700; text-decoration:none}
+
+    /* subtle separators & spacing */
+    .spacer{height:18px}
+
+    @media (max-width:900px){
+      .grid{grid-template-columns:1fr}
+      .top-row{flex-direction:column; align-items:flex-start; transform:translateY(-28px)}
+      .actions{align-self:stretch; width:100%; justify-content:flex-end}
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="panel">
+
+      <!-- decorative banner -->
+      <div class="banner"></div>
+
+      <!-- top row: avatar + name + email + edit -->
+      <div class="top-row">
+        <div class="avatar-wrap">
+          <img class="avatar" src="{{ avatar_url }}" alt="avatar">
+        </div>
+
+        <div class="meta">
+          <h1>{{ display_name }}</h1>
+          <div class="email">{{ session.email if session.email is defined else '' }}</div>
+        </div>
+
+        <div class="actions">
+          <!-- Edit button toggles form read/write. Button will change to Save when editing. -->
+          <button id="editBtn" class="btn-edit">Edit</button>
+        </div>
+      </div>
+
+      <!-- content (form area) -->
+      <div class="content">
+
+        <!-- ATHLETE form (rendered only if user_role == "athlete") -->
+        {% if user_role == "athlete" %}
+        <form id="profileForm" method="POST" action="/update_profile/athlete">
+          <div class="grid">
+            <div class="field">
+              <label>Full Name</label>
+              <input name="full_name" value="{{ user.full_name }}" readonly>
+            </div>
+
+            <div class="field">
+              <label>Nick Name</label>
+              <input name="nick_name" value="{{ user.nick_name if user.nick_name is defined else '' }}" readonly placeholder="Your Nick Name">
+            </div>
+
+            <div class="field">
+              <label>Gender</label>
+              <select name="gender" disabled>
+                <option value="" {% if not user.gender %}selected{% endif %}>Select</option>
+                <option value="Male" {% if user.gender=='Male' %}selected{% endif %}>Male</option>
+                <option value="Female" {% if user.gender=='Female' %}selected{% endif %}>Female</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label>Country</label>
+              <input name="location" value="{{ user.location }}" readonly placeholder="Country">
+            </div>
+
+            <div class="field">
+              <label>Language</label>
+              <input name="language" value="{{ user.language if user.language is defined else '' }}" readonly placeholder="Language">
+            </div>
+
+            <div class="field">
+              <label>Time Zone</label>
+              <input name="time_zone" value="{{ user.time_zone if user.time_zone is defined else '' }}" readonly placeholder="Time Zone">
+            </div>
+
+            <!-- (keep other athlete fields but hidden visually if not needed) -->
+          </div>
+        </form>
+        {% endif %}
+
+        <!-- SPONSOR form -->
+        {% if user_role == "sponsor" %}
+        <form id="profileForm" method="POST" action="/update_profile/sponsor">
+          <div class="grid">
+            <div class="field">
+              <label>Organization Name</label>
+              <input name="name" value="{{ user.name }}" readonly>
+            </div>
+            <div class="field">
+              <label>Contact Person</label>
+              <input name="contact_person" value="{{ user.contact_person }}" readonly>
+            </div>
+            <div class="field">
+              <label>Sport</label>
+              <input name="sport" value="{{ user.sport }}" readonly>
+            </div>
+            <div class="field">
+              <label>Contact Number</label>
+              <input name="contact_number" value="{{ user.contact_number }}" readonly>
+            </div>
+            <div class="field">
+              <label>Location</label>
+              <input name="location" value="{{ user.location }}" readonly>
+            </div>
+          </div>
+        </form>
+        {% endif %}
+
+        <!-- COACH form -->
+        {% if user_role == "coach" %}
+        <form id="profileForm" method="POST" action="/update_profile/coach">
+          <div class="grid">
+            <div class="field">
+              <label>Full Name</label>
+              <input name="full_name" value="{{ user.full_name }}" readonly>
+            </div>
+            <div class="field">
+              <label>Specialization</label>
+              <input name="specialization" value="{{ user.specialization }}" readonly>
+            </div>
+            <div class="field">
+              <label>Certifications</label>
+              <input name="certifications" value="{{ user.certifications }}" readonly>
+            </div>
+            <div class="field">
+              <label>Experience Years</label>
+              <input name="experience_years" value="{{ user.experience_years }}" readonly>
+            </div>
+            <div class="field">
+              <label>Contact Number</label>
+              <input name="contact_number" value="{{ user.contact_number }}" readonly>
+            </div>
+            <div class="field">
+              <label>Location</label>
+              <input name="location" value="{{ user.location }}" readonly>
+            </div>
+          </div>
+        </form>
+        {% endif %}
+
+        <div class="spacer"></div>
+
+        <!-- Emails -->
+        <div class="email-block">
+          <div class="two-col-title">My email Address</div>
+          <div class="email-list">
+            <div class="email-item">
+              <div class="email-badge">✉</div>
+              <div class="email-meta">
+                <div class="em">{{ session.email if session.email is defined else '' }}</div>
+                <div class="sub">1 month ago</div>
+              </div>
+            </div>
+          </div>
+
+          
+        </div>
+
+      </div> <!-- /.content -->
+    </div> <!-- /.panel -->
+  </div> <!-- /.app -->
+
+<script>
+  // Toggle edit/read-only state and submit on Save.
+  (function(){
+    const editBtn = document.getElementById('editBtn');
+    const form = document.getElementById('profileForm');
+
+    // If no form (shouldn't happen), do nothing
+    if (!editBtn || !form) return;
+
+    let editing = false;
+
+    function setEditable(on){
+      // inputs/selects/textarea inside form
+      const fields = form.querySelectorAll('input, select, textarea');
+      fields.forEach(f => {
+        if (f.tagName.toLowerCase() === 'select') {
+          f.disabled = !on;
+        } else {
+          if (on) {
+            f.removeAttribute('readonly');
+            f.removeAttribute('disabled');
+          } else {
+            f.setAttribute('readonly','');
+            // keep select disabled style
+            if (f.tagName.toLowerCase() === 'select') f.disabled = true;
+          }
+        }
+      });
+    }
+
+    setEditable(false);
+
+    editBtn.addEventListener('click', function(e){
+      if (!editing) {
+        // Enter edit mode
+        editing = true;
+        editBtn.textContent = 'Save';
+        editBtn.style.background = '#1f6fe6';
+        setEditable(true);
+        // optionally focus first input
+        const first = form.querySelector('input, select, textarea');
+        if (first) first.focus();
+      } else {
+        // Save: submit form
+        editBtn.disabled = true;
+        form.submit();
+      }
+    });
+
+  })();
+</script>
+</body>
+</html>
