@@ -32,6 +32,18 @@ def login_page():
 def application_page():
     return render_template("application.html")
 
+@app.route('/admin')
+def admin():
+    return render_template('admin.html')
+
+@app.route('/adminlogin')
+def adminlogin():
+    return render_template('adminlogin.html')
+
+@app.route("/manage_users")
+def manage_users():
+    return render_template("manage_users.html")  
+
 # Register: now accepts optional display name fields (full_name / name / contact_person)
 @app.route("/register", methods=["POST"])
 def register():
