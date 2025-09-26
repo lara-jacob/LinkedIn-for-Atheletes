@@ -11,7 +11,7 @@ def get_db_connection():
         host="localhost",
         database="sporture",
         user="postgres",
-        password="12345",
+        password="1234",
         port=5432
     )
     return conn
@@ -43,8 +43,29 @@ def register():
     try:
         conn = get_db_connection()
         cur = conn.cursor()
-        cur.execute("INSERT INTO users (email, password, type) VALUES (%s, %s, %s)", 
-                    (email, hashed_password, user_type))
+        if user_type.lower() == "athlete":
+            cur.execute("""
+                INSERT INTO athletes (email, password) 
+                VALUES (%s, %s)
+            """, (email, hashed_password))
+
+        elif user_type.lower() == "coach":
+            cur.execute("""
+                INSERT INTO coaches (email, password) 
+                VALUES (%s, %s)
+            """, (email, hashed_password))
+
+        elif user_type.lower() == "sponsor":
+            cur.execute("""
+                INSERT INTO sponsors (email, password) 
+                VALUES (%s, %s)
+            """, (email, hashed_password))
+
+        else:
+            conn.rollback()
+            cur.close()
+            conn.close()
+            return jsonify({"success": False, "message": "Invalid user type"}), 400
         conn.commit()
         cur.close()
         conn.close()
@@ -64,15 +85,46 @@ def login():
     try:
         conn = get_db_connection()
         cur = conn.cursor()
-        cur.execute("SELECT id, password, type FROM users WHERE email=%s", (email,))
-        user = cur.fetchone()
+        user_type = None
+        stored_password = None
+
+        # Check Athlete
+        cur.execute("SELECT password FROM athletes WHERE email=%s", (email,))
+        result = cur.fetchone()
+        if result:
+            stored_password = result[0]
+            user_type = "athlete"
+
+        # Check Coach
+        if not stored_password:
+            cur.execute("SELECT password FROM coaches WHERE email=%s", (email,))
+            result = cur.fetchone()
+            if result:
+                stored_password = result[0]
+                user_type = "coach"
+
+        # Check Sponsor
+        if not stored_password:
+            cur.execute("SELECT password FROM sponsors WHERE email=%s", (email,))
+            result = cur.fetchone()
+            if result:
+                stored_password = result[0]
+                user_type = "sponsor"
+
         cur.close()
         conn.close()
 
-        if user and check_password_hash(user[1], password):
-            return jsonify({"success": True, "message": "Login successful", "redirect": "/dashboard"})
-        else:
-            return jsonify({"success": False, "message": "Invalid credentials"})
+        # ✅ If you stored hashed passwords
+        if stored_password and check_password_hash(stored_password, password):
+            return jsonify({
+                "success": True,
+                "message": "Login successful",
+                "type": user_type,
+                "redirect": "/dashboard"
+            })
+
+        return jsonify({"success": False, "message": "Invalid credentials"})
+
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
 
