@@ -17,7 +17,7 @@ def get_db_connection():
         host="localhost",
         database="sporture",
         user="postgres",
-        password="12345",
+        password="1234",
         port=5432
     )
 
@@ -456,6 +456,41 @@ def update_profile_sponsor():
             pass
 
     return redirect(url_for("profile_page"))
+@app.route("/get_users")
+def get_users():
+    user_type = request.args.get("type")  # athlete, coach, sponsor
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    try:
+        if user_type == "athlete":
+            cur.execute("SELECT id, full_name, email FROM athletes")
+            rows = cur.fetchall()
+            users = [{"id": r[0], "name": r[1], "email": r[2]} for r in rows]
+
+        elif user_type == "coach":
+            cur.execute("SELECT id, full_name, email FROM coaches")
+            rows = cur.fetchall()
+            users = [{"id": r[0], "name": r[1], "email": r[2]} for r in rows]
+
+        elif user_type == "sponsor":
+            cur.execute("SELECT id, name, email FROM sponsors")
+            rows = cur.fetchall()
+            users = [{"id": r[0], "name": r[1], "email": r[2]} for r in rows]
+
+        else:
+            users = []
+
+    except Exception as e:
+        print("Error fetching users:", e)
+        users = []
+
+    finally:
+        cur.close()
+        conn.close()
+
+    return jsonify(users)
 
 if __name__ == "__main__":
     app.run(debug=True)
