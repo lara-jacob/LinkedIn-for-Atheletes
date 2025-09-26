@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Password Input</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Background image */
+        .bg-image {
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+            background-image: url('/static/bg.jpg');
+            background-size: cover;
+            background-position: center;
+        }
+
+        /* Overlay on top of background */
+        .overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    /* Gradient overlay: top dark to transparent at bottom */
+    background: linear-gradient(to bottom, #33a9d88e, #16c6b781);
+}
+
+
+        .container {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.85);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .password-box {
+            display: flex;
+            align-items: center;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            padding: 5px 10px;
+            background: #fff;
+            margin-bottom: 15px;
+        }
+
+        .password-box input {
+            border: none;
+            outline: none;
+            padding: 10px;
+            font-size: 16px;
+            width: 200px;
+        }
+
+        .eye-icon {
+            cursor: pointer;
+            margin-left: 10px;
+            font-size: 18px;
+        }
+
+        .submit-btn {
+            padding: 10px 20px;
+            border: none;
+            background: #0e847a;
+            color: white;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .submit-btn:hover {
+            background: #4588bc;
+        }
+
+        /* Navbar */
+        .nav {
+            position: fixed;
+            top: 18px;
+            left: 18px;
+            right: 18px;
+            z-index: 3;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .brand .name {
+            color: #fff;
+            font-weight: 700;
+            font-size: 1.4rem;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: white;
+            padding: 6px 10px;
+            border-radius: 6px;
+            text-decoration: none;
+            transition: background 0.3s;
+        }
+
+        .nav-links a.active,
+        .nav-links a:hover {
+            color: white;
+            background: rgba(255, 255, 255, 0.15);
+        }
+    </style>
+</head>
+<body>
+    <!-- Background Image -->
+    <div class="bg-image"></div>
+
+    <!-- Overlay -->
+    <div class="overlay"></div>
+
+    <!-- Navbar -->
+    <div class="nav" role="navigation" aria-label="Main nav">
+        <div class="brand" aria-label="Brand">
+            <div class="name">SPORTURE</div>
+        </div>
+        <nav class="nav-links">
+            <a href="/">Home</a>
+            <a href="#slide-about">About Us</a>
+            <a href="/login_page" class="active">Login/Register</a>
+            <a href="#slide-contact">Contact Me</a>
+        </nav>
+    </div>
+
+    <!-- Container -->
+    <div class="container">
+        <h2>ENTER ADMIN PASSWORD</h2>
+        <div class="password-box">
+            <input type="password" id="password" placeholder="Enter password">
+            <i class="eye-icon" onclick="togglePassword()">👁</i>
+        </div>
+        <button class="submit-btn" onclick="submitPassword()">Submit</button>
+    </div>
+
+    <script>
+        function togglePassword() {
+            const passwordField = document.getElementById("password");
+            passwordField.type = passwordField.type === "password" ? "text" : "password";
+        }
+
+        function submitPassword() {
+            const password = document.getElementById("password").value;
+            if (password === "098765") {
+                window.location.href = "/admin";  // Replace with Flask url_for in actual app
+            } else {
+                alert("Incorrect password! Try again.");
+            }
+        }
+    </script>
+</body>
+</html>
