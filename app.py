@@ -17,7 +17,7 @@ def get_db_connection():
         host="localhost",
         database="sporture",
         user="postgres",
-        password="1234",
+        password="12345",
         port=5432
     )
 
@@ -195,11 +195,39 @@ def login():
 
 @app.route("/submit_application", methods=["POST"])
 def submit_application():
-    # (unchanged from your original)
     data = request.get_json()
     athlete_name = data.get("athlete_name")
-    # ... validate and insert ...
-    return jsonify({"success": True, "message": "Application submitted (stub)"})
+    age = data.get("age")
+    gender = data.get("gender")
+    sport = data.get("sport")
+    location = data.get("location")
+    application_type = data.get("application_type")
+    achievements = data.get("achievements")
+    motivation = data.get("motivation")
+    goals = data.get("goals")
+    supporting_docs = data.get("supporting_docs")
+
+    if not athlete_name or not sport or not application_type:
+        return jsonify({"success": False, "message": "Missing required fields"}), 400
+
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            INSERT INTO applications (
+                athlete_name, age, gender, sport, location,
+                application_type, achievements, motivation, goals,
+                supporting_docs, status
+            ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'Pending')
+        """, (athlete_name, age, gender, sport, location, application_type,
+              achievements, motivation, goals, supporting_docs))
+        conn.commit()
+        cur.close()
+        conn.close()
+        return jsonify({"success": True, "message": "Application submitted successfully"})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+
 
 
 @app.route("/dashboard")
@@ -264,7 +292,6 @@ def dashboard_page():
 
 @app.route("/profile")
 def profile_page():
-    # require login
     if "email" not in session or "user_type" not in session:
         return redirect(url_for("login_page"))
 
@@ -273,34 +300,59 @@ def profile_page():
     display_name = session.get("display_name", email.split("@")[0])
     avatar_url = session.get("avatar_url") or f"https://avatars.dicebear.com/api/identicon/{display_name}.svg?scale=85"
 
-    # fetch current user data from DB so template fields are populated
     conn = get_db_connection()
     cur = conn.cursor()
     user = {}
+
     try:
         if user_type == "athlete":
+            # 1️⃣ Get athlete personal data
             cur.execute("""
                 SELECT full_name, age, gender, sport, achievements, ranking, experience_years, contact_number, location
-                FROM athletes WHERE email=%s
+                FROM athletes
+                WHERE email=%s
             """, (email,))
-            row = cur.fetchone()
-            if row:
+            athlete_row = cur.fetchone()
+            if athlete_row:
                 user = {
-                    "full_name": row[0],
-                    "age": row[1],
-                    "gender": row[2],
-                    "sport": row[3],
-                    "achievements": row[4],
-                    "ranking": row[5],
-                    "experience_years": row[6],
-                    "contact_number": row[7],
-                    "location": row[8],
+                    "full_name": athlete_row[0],
+                    "age": athlete_row[1],
+                    "gender": athlete_row[2],
+                    "sport": athlete_row[3],
+                    "achievements": athlete_row[4],
+                    "ranking": athlete_row[5],
+                    "experience_years": athlete_row[6],
+                    "contact_number": athlete_row[7],
+                    "location": athlete_row[8],
                 }
+
+            # 2️⃣ Get application data (latest submission)
+            cur.execute("""
+                SELECT application_type, achievements, motivation, goals, status
+                FROM applications
+                WHERE athlete_name = %s
+                ORDER BY submission_date DESC
+                LIMIT 1
+            """, (user["full_name"],))
+            app_row = cur.fetchone()
+            if app_row:
+                user["application_type"] = app_row[0]
+                user["achievements"] = app_row[1]  # overwrite if needed
+                user["motivation"] = app_row[2]
+                user["goals"] = app_row[3]
+                user["status"] = app_row[4]
+            else:
+                # No application found
+                user["application_type"] = None
+                user["motivation"] = None
+                user["goals"] = None
+                user["status"] = "Pending"
 
         elif user_type == "coach":
             cur.execute("""
                 SELECT full_name, specialization, certifications, experience_years, contact_number, location
-                FROM coaches WHERE email=%s
+                FROM coaches
+                WHERE email=%s
             """, (email,))
             row = cur.fetchone()
             if row:
@@ -316,7 +368,8 @@ def profile_page():
         elif user_type == "sponsor":
             cur.execute("""
                 SELECT name, contact_person, sport, contact_number, location
-                FROM sponsors WHERE email=%s
+                FROM sponsors
+                WHERE email=%s
             """, (email,))
             row = cur.fetchone()
             if row:
@@ -339,6 +392,7 @@ def profile_page():
         display_name=display_name,
         avatar_url=avatar_url
     )
+
 
 @app.route("/update_profile/athlete", methods=["POST"])
 def update_profile_athlete():
