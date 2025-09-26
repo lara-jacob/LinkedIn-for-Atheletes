@@ -9,7 +9,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
   <style>
     :root{
-      /* colors & accents aligned with your index */
       --accent: #33a8d8;
       --accent-2: #16c6b7;
       --fg-dark: #0b1720;
@@ -19,11 +18,8 @@
       --radius: 14px;
       --ease: cubic-bezier(.2,.9,.25,1);
     }
-
     * { box-sizing: border-box; }
     html,body { height: 100%; margin: 0; font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; -webkit-font-smoothing:antialiased; background: linear-gradient(180deg, #051017 0%, #07202a 100%); color: rgba(255,255,255,0.95); }
-
-    /* Nav (copied / harmonized with index) */
     .nav { position:fixed; top:18px; left:18px; right:18px; z-index:70; display:flex; align-items:center; justify-content:space-between; pointer-events:auto; }
     .brand { display:flex; gap:12px; align-items:center; }
     .logo { width:56px; height:56px; border-radius:6px; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,var(--accent),var(--accent-2)); color:#042; font-family:"Playfair Display",serif; font-weight:700; font-size:18px; }
@@ -31,98 +27,35 @@
     .nav-links { display:flex; gap:12px; align-items:center; }
     .nav-links a { color:rgba(255,255,255,0.75); padding:6px 10px; border-radius:6px; text-decoration:none; }
     .nav-links a.active, .nav-links a:hover { color:#fff; background: rgba(255,255,255,0.04); }
-
-    /* Page container */
-    .page {
-      max-width:1180px;
-      margin: 92px auto 48px; /* top space for fixed nav */
-      padding: 20px;
-    }
-
-    /* Panel / card (white card to preserve form readability) */
-    .panel {
-      background: var(--card-bg);
-      color: var(--fg-dark);
-      border-radius: 16px;
-      box-shadow: 0 18px 50px rgba(2,10,18,0.6);
-      overflow: hidden;
-      display: block;
-    }
-
-    /* Decorative banner (blended with site style) */
-    .banner {
-      height:120px;
-      background: linear-gradient(90deg, rgba(51,168,216,0.14), rgba(22,198,183,0.14));
-      position:relative;
-      padding:20px 28px;
-      display:flex;
-      align-items:center;
-      gap:18px;
-    }
-    .banner .title {
-      font-family: "Playfair Display", serif;
-      color: var(--fg-dark);
-      font-size:1.3rem;
-      font-weight:700;
-      letter-spacing:1px;
-    }
+    .page { max-width:1180px; margin: 92px auto 48px; padding: 20px; }
+    .panel { background: var(--card-bg); color: var(--fg-dark); border-radius: 16px; box-shadow: 0 18px 50px rgba(2,10,18,0.6); overflow: hidden; display: block; }
+    .banner { height:120px; background: linear-gradient(90deg, rgba(51,168,216,0.14), rgba(22,198,183,0.14)); position:relative; padding:20px 28px; display:flex; align-items:center; gap:18px; }
+    .banner .title { font-family: "Playfair Display", serif; color: var(--fg-dark); font-size:1.3rem; font-weight:700; letter-spacing:1px; }
     .banner .subtitle { color: rgba(0,0,0,0.55); font-size:0.92rem; margin-top:6px; }
-
-    /* top row with avatar + meta + edit button */
-    .content {
-      padding: 22px 28px 36px;
-    }
-    .top-row {
-      display:flex;
-      gap:20px;
-      align-items:center;
-      transform: translateY(-44px); /* overlap banner */
-    }
+    .content { padding: 22px 28px 36px; }
+    .top-row { display:flex; gap:20px; align-items:center; transform: translateY(-44px); }
     .avatar-wrap { width:96px; height:96px; flex:0 0 96px; }
-    .avatar {
-      width:96px; height:96px; border-radius:50%;
-      object-fit:cover; border:6px solid #fff;
-      box-shadow: 0 8px 28px rgba(4,30,40,0.08); background:#f1f7fb; display:block;
-    }
+    .avatar { width:96px; height:96px; border-radius:50%; object-fit:cover; border:6px solid #fff; box-shadow: 0 8px 28px rgba(4,30,40,0.08); background:#f1f7fb; display:block; }
     .meta { flex:1; display:flex; flex-direction:column; justify-content:center; gap:6px; color:var(--fg-dark); }
     .meta h1 { margin:0; font-size:20px; letter-spacing:0.1px; }
     .meta .email { color: var(--muted); font-size:14px; margin-top:2px; }
-
     .actions { display:flex; align-items:center; gap:10px; }
-    .btn-edit {
-      background: linear-gradient(90deg,var(--accent),var(--accent-2));
-      color:#042;
-      border:0;
-      padding:10px 14px;
-      border-radius:10px;
-      font-weight:700;
-      cursor:pointer;
-      box-shadow: 0 6px 20px rgba(4,30,40,0.12);
-    }
+    .btn-edit { background: linear-gradient(90deg,var(--accent),var(--accent-2)); color:#042; border:0; padding:10px 14px; border-radius:10px; font-weight:700; cursor:pointer; box-shadow: 0 6px 20px rgba(4,30,40,0.12); }
     .btn-edit[disabled] { opacity:0.6; cursor:default; transform: none; }
-
-    /* Two-column grid for fields */
     .grid { display:grid; grid-template-columns: 1fr 1fr; gap:18px 36px; margin-top:8px; }
     .field { display:flex; flex-direction:column; }
     .field label { font-weight:600; font-size:13px; color:#223344; margin-bottom:8px; }
     .field input, .field select, .field textarea { padding:14px 12px; border-radius:10px; border:1px solid #eef3f6; background:#fbfdff; font-size:14px; color:#203241; outline:none; }
     .field input[readonly], .field select[disabled], .field textarea[readonly] { background:#fbfbfb; color:#9aa6af; }
-
     .two-col-title { margin-top:14px; font-weight:700; color:#223344; }
-
-    /* email list */
     .email-block { margin-top:22px; }
     .email-list { background:#fbfdff; border:1px solid #f1f6f9; border-radius:10px; padding:14px; color:#223344; }
     .email-item { display:flex; gap:12px; align-items:center; padding:8px 6px; }
     .email-badge { width:40px; height:40px; border-radius:50%; background:#e8f7ff; display:flex; align-items:center; justify-content:center; font-weight:700; color:var(--accent); }
     .email-meta .em { font-weight:700; }
     .email-meta .sub { color:var(--muted); font-size:13px; margin-top:4px; }
-
     .add-email { display:inline-block; margin-top:12px; padding:8px 12px; border-radius:8px; background:#e9f6ff; color:var(--accent); font-weight:700; text-decoration:none; }
-
     .spacer { height:18px; }
-
-    /* small screens */
     @media (max-width:900px) {
       .grid { grid-template-columns:1fr; }
       .top-row { flex-direction:column; align-items:flex-start; transform:translateY(-20px); gap:12px; }
@@ -130,32 +63,24 @@
       .banner { height:100px; padding:14px; }
       .page { margin-top:72px; padding:12px; }
     }
-
-    /* keep body background visible behind panel with subtle padding */
     .panel-wrap { padding: 12px; }
-
   </style>
 </head>
 <body>
 
-  <!-- Top nav (consistent with the index) -->
   <div class="nav" role="navigation" aria-label="Main nav">
     <div class="brand" aria-label="Brand">
       <div class="name">SPORTURE</div>
     </div>
-
     <nav class="nav-links" aria-label="Site links">
-      
       <a href="/login_page">Logout</a>
-
     </nav>
   </div>
 
   <main class="page" role="main">
     <div class="panel-wrap">
       <section class="panel" aria-labelledby="profileHeading">
-        <!-- Decorative banner -->
-        <div class="banner" role="presentation" aria-hidden="false">
+        <div class="banner">
           <div>
             <div class="title" id="profileHeading">Profile</div>
             <div class="subtitle">Manage your account, contact info and role-specific details</div>
@@ -163,60 +88,37 @@
         </div>
 
         <div class="content">
-          <!-- top row: avatar + name + edit -->
           <div class="top-row">
             <div class="avatar-wrap">
               <img class="avatar" src="{{ avatar_url }}" alt="avatar" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1521412644187-c49fa049e84d?auto=format&fit=crop&w=200&q=60'">
             </div>
-
             <div class="meta">
               <h1>{{ display_name }}</h1>
               <div class="email">{{ session.email if session.email is defined else '' }}</div>
             </div>
-
             <div class="actions">
-              <!-- Edit button toggles form read/write. Button will change to Save when editing. -->
               <button id="editBtn" class="btn-edit" aria-controls="profileForm">Edit</button>
             </div>
           </div>
 
-          <!-- content forms: athlete/sponsor/coach (Jinja conditionals preserved) -->
           {% if user_role == "athlete" %}
           <form id="profileForm" method="POST" action="/update_profile/athlete" autocomplete="off" novalidate>
             <div class="grid">
-              <div class="field">
-                <label for="full_name">Full Name</label>
-                <input id="full_name" name="full_name" value="{{ user.full_name }}" readonly>
-              </div>
-
-              <div class="field">
-                <label for="nick_name">Nick Name</label>
-                <input id="nick_name" name="nick_name" value="{{ user.nick_name if user.nick_name is defined else '' }}" readonly placeholder="Your Nick Name">
-              </div>
-
-              <div class="field">
-                <label for="gender">Gender</label>
+              <div class="field"><label for="full_name">Full Name</label><input id="full_name" name="full_name" value="{{ user.full_name }}" readonly></div>
+              <div class="field"><label for="age">Age</label><input id="age" name="age" value="{{ user.age }}" readonly></div>
+              <div class="field"><label for="gender">Gender</label>
                 <select id="gender" name="gender" disabled>
-                  <option value="" {% if not user.gender %}selected{% endif %}>Select</option>
+                  <option value="">Select</option>
                   <option value="Male" {% if user.gender=='Male' %}selected{% endif %}>Male</option>
                   <option value="Female" {% if user.gender=='Female' %}selected{% endif %}>Female</option>
                 </select>
               </div>
-
-              <div class="field">
-                <label for="location">Country</label>
-                <input id="location" name="location" value="{{ user.location }}" readonly placeholder="Country">
-              </div>
-
-              <div class="field">
-                <label for="language">Language</label>
-                <input id="language" name="language" value="{{ user.language if user.language is defined else '' }}" readonly placeholder="Language">
-              </div>
-
-              <div class="field">
-                <label for="time_zone">Time Zone</label>
-                <input id="time_zone" name="time_zone" value="{{ user.time_zone if user.time_zone is defined else '' }}" readonly placeholder="Time Zone">
-              </div>
+              <div class="field"><label for="sport">Sport</label><input id="sport" name="sport" value="{{ user.sport }}" readonly></div>
+              <div class="field"><label for="achievements">Achievements</label><input id="achievements" name="achievements" value="{{ user.achievements }}" readonly></div>
+              <div class="field"><label for="ranking">Ranking</label><input id="ranking" name="ranking" value="{{ user.ranking }}" readonly></div>
+              <div class="field"><label for="experience_years">Experience Years</label><input id="experience_years" name="experience_years" value="{{ user.experience_years }}" readonly></div>
+              <div class="field"><label for="contact_number">Contact Number</label><input id="contact_number" name="contact_number" value="{{ user.contact_number }}" readonly></div>
+              <div class="field"><label for="location">Location</label><input id="location" name="location" value="{{ user.location }}" readonly></div>
             </div>
           </form>
           {% endif %}
@@ -224,26 +126,11 @@
           {% if user_role == "sponsor" %}
           <form id="profileForm" method="POST" action="/update_profile/sponsor" autocomplete="off" novalidate>
             <div class="grid">
-              <div class="field">
-                <label for="org_name">Organization Name</label>
-                <input id="org_name" name="name" value="{{ user.name }}" readonly>
-              </div>
-              <div class="field">
-                <label for="contact_person">Contact Person</label>
-                <input id="contact_person" name="contact_person" value="{{ user.contact_person }}" readonly>
-              </div>
-              <div class="field">
-                <label for="sport">Sport</label>
-                <input id="sport" name="sport" value="{{ user.sport }}" readonly>
-              </div>
-              <div class="field">
-                <label for="contact_number">Contact Number</label>
-                <input id="contact_number" name="contact_number" value="{{ user.contact_number }}" readonly>
-              </div>
-              <div class="field">
-                <label for="location2">Location</label>
-                <input id="location2" name="location" value="{{ user.location }}" readonly>
-              </div>
+              <div class="field"><label for="name"> Name</label><input id="name" name="name" value="{{ user.name }}" readonly></div>
+              <div class="field"><label for="contact_person">Contact Person</label><input id="contact_person" name="contact_person" value="{{ user.contact_person }}" readonly></div>
+              <div class="field"><label for="sport">Sport</label><input id="sport" name="sport" value="{{ user.sport }}" readonly></div>
+              <div class="field"><label for="contact_number">Contact Number</label><input id="contact_number" name="contact_number" value="{{ user.contact_number }}" readonly></div>
+              <div class="field"><label for="location">Location</label><input id="location" name="location" value="{{ user.location }}" readonly></div>
             </div>
           </form>
           {% endif %}
@@ -251,42 +138,23 @@
           {% if user_role == "coach" %}
           <form id="profileForm" method="POST" action="/update_profile/coach" autocomplete="off" novalidate>
             <div class="grid">
-              <div class="field">
-                <label for="full_name_c">Full Name</label>
-                <input id="full_name_c" name="full_name" value="{{ user.full_name }}" readonly>
-              </div>
-              <div class="field">
-                <label for="specialization">Specialization</label>
-                <input id="specialization" name="specialization" value="{{ user.specialization }}" readonly>
-              </div>
-              <div class="field">
-                <label for="certifications">Certifications</label>
-                <input id="certifications" name="certifications" value="{{ user.certifications }}" readonly>
-              </div>
-              <div class="field">
-                <label for="experience_years">Experience Years</label>
-                <input id="experience_years" name="experience_years" value="{{ user.experience_years }}" readonly>
-              </div>
-              <div class="field">
-                <label for="contact_number_c">Contact Number</label>
-                <input id="contact_number_c" name="contact_number" value="{{ user.contact_number }}" readonly>
-              </div>
-              <div class="field">
-                <label for="location_c">Location</label>
-                <input id="location_c" name="location" value="{{ user.location }}" readonly>
-              </div>
+              <div class="field"><label for="full_name">Full Name</label><input id="full_name" name="full_name" value="{{ user.full_name }}" readonly></div>
+              <div class="field"><label for="specialization">Specialization</label><input id="specialization" name="specialization" value="{{ user.specialization }}" readonly></div>
+              <div class="field"><label for="certifications">Certifications</label><input id="certifications" name="certifications" value="{{ user.certifications }}" readonly></div>
+              <div class="field"><label for="experience_years">Experience Years</label><input id="experience_years" name="experience_years" value="{{ user.experience_years }}" readonly></div>
+              <div class="field"><label for="contact_number">Contact Number</label><input id="contact_number" name="contact_number" value="{{ user.contact_number }}" readonly></div>
+              <div class="field"><label for="location">Location</label><input id="location" name="location" value="{{ user.location }}" readonly></div>
             </div>
           </form>
           {% endif %}
 
           <div class="spacer"></div>
 
-          <!-- Emails -->
-          <div class="email-block" aria-live="polite">
+          <div class="email-block">
             <div class="two-col-title">My email Address</div>
             <div class="email-list">
               <div class="email-item">
-                <div class="email-badge" aria-hidden="true">✉</div>
+                <div class="email-badge">✉</div>
                 <div class="email-meta">
                   <div class="em">{{ session.email if session.email is defined else '' }}</div>
                   <div class="sub">1 month ago</div>
@@ -294,69 +162,42 @@
               </div>
             </div>
           </div>
-
-        </div> <!-- /.content -->
+        </div>
       </section>
-    </div> <!-- /.panel-wrap -->
+    </div>
   </main>
 
   <script>
-    // Toggle edit/read-only state and submit on Save.
     (function(){
       const editBtn = document.getElementById('editBtn');
       const form = document.getElementById('profileForm');
-
-      // defensive: if there's no editable form (unexpected), do nothing
       if (!editBtn || !form) return;
-
       let editing = false;
-
       function setEditable(on){
-        // inputs/selects/textarea inside form
         const fields = form.querySelectorAll('input, select, textarea');
         fields.forEach(f => {
           const tag = f.tagName.toLowerCase();
-          if (tag === 'select') {
-            f.disabled = !on;
-          } else {
-            if (on) {
-              f.removeAttribute('readonly');
-              f.removeAttribute('disabled');
-            } else {
-              f.setAttribute('readonly','');
-              // keep select disabled style
-              if (tag === 'select') f.disabled = true;
-            }
-          }
+          if (tag === 'select') f.disabled = !on;
+          else if (on) { f.removeAttribute('readonly'); f.removeAttribute('disabled'); }
+          else { f.setAttribute('readonly',''); if (tag === 'select') f.disabled = true; }
         });
       }
-
       setEditable(false);
-
       editBtn.addEventListener('click', function(e){
         if (!editing) {
-          // Enter edit mode
           editing = true;
           editBtn.textContent = 'Save';
           editBtn.style.transform = 'translateY(-1px)';
           setEditable(true);
-          // focus first input for better UX
           const first = form.querySelector('input:not([readonly]), select:not([disabled]), textarea:not([readonly])');
           if (first) first.focus();
         } else {
-          // Save: basic UX lock and submit form
           editBtn.disabled = true;
-          // Optionally you could run client-side validation here before submit.
           form.submit();
         }
       });
-
-      // If user leaves page during edit, ask to confirm (simple safeguard)
       window.addEventListener('beforeunload', function(e){
-        if (editing) {
-          e.preventDefault();
-          e.returnValue = '';
-        }
+        if (editing) { e.preventDefault(); e.returnValue = ''; }
       });
     })();
   </script>
