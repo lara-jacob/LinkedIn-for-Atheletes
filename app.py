@@ -492,5 +492,30 @@ def get_users():
 
     return jsonify(users)
 
+@app.route("/delete_user/<user_type>/<int:user_id>", methods=["DELETE"])
+def delete_user(user_type, user_id):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        if user_type == "athlete":
+            cur.execute("DELETE FROM athletes WHERE id=%s", (user_id,))
+        elif user_type == "coach":
+            cur.execute("DELETE FROM coaches WHERE id=%s", (user_id,))
+        elif user_type == "sponsor":
+            cur.execute("DELETE FROM sponsors WHERE id=%s", (user_id,))
+        else:
+            return jsonify({"success": False, "message": "Invalid user type"}), 400
+
+        conn.commit()
+        return jsonify({"success": True})
+
+    except Exception as e:
+        print("Delete error:", e)
+        return jsonify({"success": False, "message": str(e)}), 500
+
+    finally:
+        cur.close()
+        conn.close()
+
 if __name__ == "__main__":
     app.run(debug=True)
