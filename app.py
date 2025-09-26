@@ -17,7 +17,7 @@ def get_db_connection():
         host="localhost",
         database="sporture",
         user="postgres",
-        password="12345",
+        password="1234",
         port=5432
     )
 

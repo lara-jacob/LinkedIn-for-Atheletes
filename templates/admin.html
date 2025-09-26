@@ -239,7 +239,7 @@ html, body {
 
 <script>
 function logout() {
-    window.location.href = "/";
+    window.location.href = "/login_page";
 }
 
 // Show title above when hover
@@ -254,6 +254,24 @@ boxes.forEach(box => {
     box.addEventListener("mouseleave", () => {
         title.style.display = "none";
     });
+});
+
+// <<< Add this new part for navigation >>>
+const navigationMap = {
+    "Athletes": "/manage_users?type=athlete",
+    "Coaches": "/manage_users?type=coach",
+    "Sponsors": "/manage_users?type=sponsor",
+    "Applications": "/application_approval"
+};
+
+boxes.forEach(box => {
+    const title = box.getAttribute('data-title');
+    if (navigationMap[title]) {
+        box.style.cursor = 'pointer';
+        box.addEventListener('click', () => {
+            window.location.href = navigationMap[title];
+        });
+    }
 });
 </script>
 
