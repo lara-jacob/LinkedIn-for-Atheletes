@@ -28,6 +28,10 @@ def login_page():
 def dashboard_page():
     return render_template("dashboard.html")
 
+@app.route("/application")
+def application_page():
+    return render_template("application.html")
+
 @app.route("/register", methods=["POST"])
 def register():
     data = request.get_json()
@@ -134,6 +138,45 @@ def login():
 
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
+    
+
+
+    # Submit new application (athlete)
+@app.route("/submit_application", methods=["POST"])
+def submit_application():
+    data = request.get_json()
+    athlete_name = data.get("athlete_name")
+    age = data.get("age")
+    gender = data.get("gender")
+    sport = data.get("sport")
+    location = data.get("location")
+    application_type = data.get("application_type")
+    achievements = data.get("achievements")
+    motivation = data.get("motivation")
+    goals = data.get("goals")
+    supporting_docs = data.get("supporting_docs")
+
+    if not athlete_name or not sport or not application_type:
+        return jsonify({"success": False, "message": "Missing required fields"}), 400
+
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            INSERT INTO applications (
+                athlete_name, age, gender, sport, location,
+                application_type, achievements, motivation, goals,
+                supporting_docs, status
+            ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'Pending')
+        """, (athlete_name, age, gender, sport, location, application_type,
+              achievements, motivation, goals, supporting_docs))
+        conn.commit()
+        cur.close()
+        conn.close()
+        return jsonify({"success": True, "message": "Application submitted successfully"})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+
 
 
 if __name__ == "__main__":

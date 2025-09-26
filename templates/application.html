@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Athlete Application</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to right, #33a8d8, #16c6b7);
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .container {
+      background: rgba(255, 255, 255, 0.95);
+      padding: 30px;
+      border-radius: 12px;
+      max-width: 600px;
+      width: 100%;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #222;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    label {
+      font-weight: bold;
+      display: block;
+      margin-bottom: 6px;
+      color: #333;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+    textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #16c6b7;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    button:hover {
+      background: #129a8e;
+    }
+    .message {
+      margin-top: 15px;
+      text-align: center;
+      font-weight: bold;
+    }
+    .success { color: green; }
+    .error { color: red; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Athlete Application Form</h2>
+    <form id="applicationForm">
+      <div class="form-group">
+        <label for="athlete_name">Full Name</label>
+        <input type="text" id="athlete_name" required>
+      </div>
+      <div class="form-group">
+        <label for="age">Age</label>
+        <input type="number" id="age" min="5" max="100">
+      </div>
+      <div class="form-group">
+        <label for="gender">Gender</label>
+        <select id="gender">
+          <option value="">Select</option>
+          <option>Male</option>
+          <option>Female</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="sport">Sport</label>
+        <input type="text" id="sport" required>
+      </div>
+      <div class="form-group">
+        <label for="location">Location</label>
+        <input type="text" id="location">
+      </div>
+      <div class="form-group">
+        <label for="application_type">Application Type</label>
+        <select id="application_type" required>
+          <option value="">Select</option>
+          <option value="Coach">Coach</option>
+          <option value="Sponsor">Sponsor</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="achievements">Achievements</label>
+        <textarea id="achievements"></textarea>
+      </div>
+      <div class="form-group">
+        <label for="motivation">Motivation</label>
+        <textarea id="motivation"></textarea>
+      </div>
+      <div class="form-group">
+        <label for="goals">Goals</label>
+        <textarea id="goals"></textarea>
+      </div>
+      <div class="form-group">
+        <label for="supporting_docs">Supporting Documents (links)</label>
+        <input type="text" id="supporting_docs" placeholder="Google Drive / Dropbox link">
+      </div>
+      <button type="submit">Submit Application</button>
+    </form>
+    <div id="formMessage" class="message"></div>
+  </div>
+
+  <script>
+    document.getElementById("applicationForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+
+      const data = {
+        athlete_name: document.getElementById("athlete_name").value,
+        age: document.getElementById("age").value,
+        gender: document.getElementById("gender").value,
+        sport: document.getElementById("sport").value,
+        location: document.getElementById("location").value,
+        application_type: document.getElementById("application_type").value,
+        achievements: document.getElementById("achievements").value,
+        motivation: document.getElementById("motivation").value,
+        goals: document.getElementById("goals").value,
+        supporting_docs: document.getElementById("supporting_docs").value
+      };
+
+      fetch("/submit_application", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      })
+      .then(res => res.json())
+      .then(response => {
+        const msgDiv = document.getElementById("formMessage");
+        if (response.success) {
+          msgDiv.textContent = response.message;
+          msgDiv.className = "message success";
+          document.getElementById("applicationForm").reset();
+        } else {
+          msgDiv.textContent = response.message;
+          msgDiv.className = "message error";
+        }
+      })
+      .catch(err => {
+        document.getElementById("formMessage").textContent = "Error submitting application.";
+        document.getElementById("formMessage").className = "message error";
+      });
+    });
+  </script>
+</body>
+</html>
