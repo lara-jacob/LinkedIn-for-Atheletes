@@ -8,7 +8,7 @@ from flask import abort
 # near your app setup
 logging.basicConfig(level=logging.DEBUG)
 
-app = Flask(__name__)
+app = Flask(_name_)
 CORS(app)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "replace_this_in_prod")
 
@@ -17,7 +17,7 @@ def get_db_connection():
         host="localhost",
         database="sporture",
         user="postgres",
-        password="1234",
+        password="12345",
         port=5432
     )
 
@@ -169,7 +169,7 @@ def login():
             row = cur.fetchone()
             if row:
                 stored_password = row[0]
-                # prefer `name`, fallback to contact_person
+                # prefer name, fallback to contact_person
                 display_name = row[1] or row[2]
                 user_type = "sponsor"
 
@@ -294,6 +294,9 @@ def dashboard_page():
     )
 
 
+from psycopg2.extras import RealDictCursor
+from datetime import datetime
+
 @app.route("/profile")
 def profile_page():
     if "email" not in session or "user_type" not in session:
@@ -305,140 +308,122 @@ def profile_page():
     avatar_url = session.get("avatar_url") or f"https://avatars.dicebear.com/api/identicon/{display_name}.svg?scale=85"
 
     conn = get_db_connection()
-    cur = conn.cursor()
+    # use RealDictCursor to make mapping rows -> dicts easier
+    cur = conn.cursor(cursor_factory=RealDictCursor)
     user = {}
 
     try:
         if user_type == "athlete":
-            # 1️⃣ Get athlete personal data
+            # get athlete personal data
             cur.execute("""
                 SELECT full_name, age, gender, sport, achievements, ranking, experience_years, contact_number, location
                 FROM athletes
-                WHERE email=%s
+                WHERE email = %s
             """, (email,))
             athlete_row = cur.fetchone()
             if athlete_row:
                 user = {
-                    "full_name": athlete_row[0],
-                    "age": athlete_row[1],
-                    "gender": athlete_row[2],
-                    "sport": athlete_row[3],
-                    "achievements": athlete_row[4],
-                    "ranking": athlete_row[5],
-                    "experience_years": athlete_row[6],
-                    "contact_number": athlete_row[7],
-                    "location": athlete_row[8],
+                    "full_name": athlete_row["full_name"],
+                    "age": athlete_row["age"],
+                    "gender": athlete_row["gender"],
+                    "sport": athlete_row["sport"],
+                    "achievements": athlete_row["achievements"],
+                    "ranking": athlete_row["ranking"],
+                    "experience_years": athlete_row["experience_years"],
+                    "contact_number": athlete_row["contact_number"],
+                    "location": athlete_row["location"],
                 }
+            # fallback display name if full_name not present
+            athlete_name = user.get("full_name") or display_name
 
-            # 2️⃣ Get application data (latest submission)
+            # fetch ALL applications for this athlete (newest first)
             cur.execute("""
-                SELECT application_type, achievements, motivation, goals, status
+                SELECT id, athlete_name, application_type, sport, location, status, submission_date,
+                       achievements, motivation, goals, supporting_docs
                 FROM applications
                 WHERE athlete_name = %s
                 ORDER BY submission_date DESC
-                LIMIT 1
-            """, (user["full_name"],))
-            app_row = cur.fetchone()
-            if app_row:
-                user["application_type"] = app_row[0]
-                user["achievements"] = app_row[1]  # overwrite if needed
-                user["motivation"] = app_row[2]
-                user["goals"] = app_row[3]
-                user["status"] = app_row[4]
-            else:
-                # No application found
-                user["application_type"] = None
-                user["motivation"] = None
-                user["goals"] = None
-                user["status"] = "Pending"
+            """, (athlete_name,))
+            apps = cur.fetchall()
+            # apps will be a list of RealDictRow (dict-like). Keep as list to pass into template.
+            applications = apps or []
 
         elif user_type == "coach":
+            # coach personal data
             cur.execute("""
                 SELECT full_name, specialization, certifications, experience_years, contact_number, location
                 FROM coaches
-                WHERE email=%s
+                WHERE email = %s
             """, (email,))
             row = cur.fetchone()
             if row:
                 user = {
-                    "full_name": row[0],
-                    "specialization": row[1],
-                    "certifications": row[2],
-                    "experience_years": row[3],
-                    "contact_number": row[4],
-                    "location": row[5],
+                    "full_name": row["full_name"],
+                    "specialization": row["specialization"],
+                    "certifications": row["certifications"],
+                    "experience_years": row["experience_years"],
+                    "contact_number": row["contact_number"],
+                    "location": row["location"],
                 }
 
+            # attempt to find any applications that reference this coach (best-effort)
+            coach_name = user.get("full_name") or display_name
+            cur.execute("""
+                SELECT id, athlete_name, application_type, sport, location, status, submission_date,
+                       achievements, motivation, goals, supporting_docs
+                FROM applications
+                WHERE application_type ILIKE 'Coach' AND (supporting_docs ILIKE %s OR motivation ILIKE %s)
+                ORDER BY submission_date DESC
+                LIMIT 0
+            """, (f"%{coach_name}%", f"%{coach_name}%"))  # default: empty resultset; adjust as needed
+            applications = cur.fetchall() or []
+
         elif user_type == "sponsor":
+            # sponsor personal data
             cur.execute("""
                 SELECT name, contact_person, sport, contact_number, location
                 FROM sponsors
-                WHERE email=%s
+                WHERE email = %s
             """, (email,))
             row = cur.fetchone()
             if row:
                 user = {
-                    "name": row[0],
-                    "contact_person": row[1],
-                    "sport": row[2],
-                    "contact_number": row[3],
-                    "location": row[4],
+                    "name": row["name"],
+                    "contact_person": row["contact_person"],
+                    "sport": row["sport"],
+                    "contact_number": row["contact_number"],
+                    "location": row["location"],
                 }
+
+            # attempt to find sponsor-related applications (best-effort)
+            sponsor_name = user.get("name") or user.get("contact_person") or display_name
+            cur.execute("""
+                SELECT id, athlete_name, application_type, sport, location, status, submission_date,
+                       achievements, motivation, goals, supporting_docs
+                FROM applications
+                WHERE application_type ILIKE 'Sponsor' AND (supporting_docs ILIKE %s OR goals ILIKE %s)
+                ORDER BY submission_date DESC
+                LIMIT 0
+            """, (f"%{sponsor_name}%", f"%{sponsor_name}%"))
+            applications = cur.fetchall() or []
+
+        else:
+            # unknown user type -> no applications
+            applications = []
 
     finally:
         cur.close()
         conn.close()
 
+    # render the template with the applications list
     return render_template(
         "profile.html",
         user=user,
         user_role=user_type,
         display_name=display_name,
-        avatar_url=avatar_url
+        avatar_url=avatar_url,
+        applications=applications
     )
-
-
-@app.route("/update_profile/athlete", methods=["POST"])
-def update_profile_athlete():
-    if "email" not in session or session.get("user_type") != "athlete":
-        return redirect(url_for("login_page"))
-
-    email = session["email"]
-
-    full_name = request.form.get("full_name")
-    age = request.form.get("age")
-    gender = request.form.get("gender")
-    sport = request.form.get("sport")
-    achievements = request.form.get("achievements")
-    ranking = request.form.get("ranking")
-    experience_years = request.form.get("experience_years")
-    contact_number = request.form.get("contact_number")
-    location = request.form.get("location")
-
-    try:
-        conn = get_db_connection()
-        cur = conn.cursor()
-        cur.execute("""
-            UPDATE athletes
-            SET full_name=%s,
-                age=%s,
-                gender=%s,
-                sport=%s,
-                achievements=%s,
-                ranking=%s,
-                experience_years=%s,
-                contact_number=%s,
-                location=%s
-            WHERE email=%s
-        """, (full_name, age, gender, sport, achievements, ranking, experience_years, contact_number, location, email))
-        conn.commit()
-    except Exception as e:
-        logging.exception("Error updating athlete profile")
-    finally:
-        cur.close()
-        conn.close()
-
-    return redirect(url_for("profile_page"))
 
 
 
@@ -602,5 +587,5 @@ def update_application_status(app_id):
     return jsonify({"success": True})
 
 
-if __name__ == "__main__":
+if _name_ == "_main_":
     app.run(debug=True)

@@ -1,4 +1,4 @@
-<!-- templates/profile.html -->
+<!-- Full file with Application Details section appended -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -56,12 +56,37 @@
     .email-meta .sub { color:var(--muted); font-size:13px; margin-top:4px; }
     .add-email { display:inline-block; margin-top:12px; padding:8px 12px; border-radius:8px; background:#e9f6ff; color:var(--accent); font-weight:700; text-decoration:none; }
     .spacer { height:18px; }
+
+    /* Applications styles */
+    .apps-section { margin-top:22px; }
+    .apps-header { display:flex; justify-content:space-between; align-items:center; gap:12px; }
+    .apps-header h2 { margin:0; font-size:1rem; color: #223344; font-weight:700; }
+    .apps-actions a { font-weight:700; color: var(--accent); text-decoration:none; padding:8px 10px; border-radius:8px; background:#f1fcff; }
+    .apps-table { width:100%; border-collapse:collapse; margin-top:12px; background:#fbfdff; border:1px solid #f1f6f9; border-radius:10px; overflow:hidden; }
+    .apps-table thead th { text-align:left; padding:12px 14px; font-size:13px; color:#203241; background:#fff; border-bottom:1px solid #eef3f6; }
+    .apps-table tbody td { padding:12px 14px; color:#203241; font-size:14px; border-bottom:1px solid #f7fafb; vertical-align:middle; }
+    .apps-table tbody tr:last-child td { border-bottom:0; }
+    .status-pill { display:inline-block; padding:6px 10px; border-radius:999px; font-weight:700; font-size:12px; }
+    .status-Pending { background:#fff7e6; color:#b27700; }
+    .status-Verified { background:#eefcf3; color:#087a3a; }
+    .status-Approved { background:#e9f6ff; color:#0a6b9f; }
+    .status-Closed { background:#f3f3f3; color:#666; }
+
+    /* Card layout for small screens */
+    .app-cards { display:none; margin-top:12px; gap:12px; }
+    .app-card { background:#fbfdff; border:1px solid #f1f6f9; padding:12px; border-radius:10px; color:#203241; }
+    .app-card .row { display:flex; justify-content:space-between; margin-bottom:8px; }
+    .app-card .label { color:var(--muted); font-size:13px; }
+    .app-meta { font-size:13px; color:var(--muted); margin-top:6px; }
+
     @media (max-width:900px) {
       .grid { grid-template-columns:1fr; }
       .top-row { flex-direction:column; align-items:flex-start; transform:translateY(-20px); gap:12px; }
       .actions { align-self:stretch; width:100%; justify-content:flex-end; }
       .banner { height:100px; padding:14px; }
       .page { margin-top:72px; padding:12px; }
+      .apps-table { display:none; }
+      .app-cards { display:flex; flex-direction:column; }
     }
     .panel-wrap { padding: 12px; }
   </style>
@@ -163,8 +188,91 @@
               </div>
             </div>
           </div>
+
+          {# show applications only for athletes #}
+{% if user_role == 'athlete' %}
+  <!-- =======================
+       Application Details
+       Requires: backend to pass applications list for the logged user
+       ======================= -->
+  <div class="apps-section" aria-labelledby="appsHeading">
+    <div class="apps-header">
+      <h2 id="appsHeading">Application details</h2>
+      <div class="apps-actions">
+        <a href="/application" title="Create new application">New Application</a>
+      </div>
+    </div>
+
+    {% if applications is defined and applications|length > 0 %}
+      <!-- Table for desktop -->
+      <table class="apps-table" role="table" aria-label="Your applications">
+        <thead>
+          <tr>
+            <th>Type</th>
+            <th>Sport / Role</th>
+            <th>Location</th>
+            <th>Status</th>
+            <th>Submitted</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for app in applications %}
+          <tr>
+            <td>{{ app.application_type }}</td>
+            <td>
+              <div style="font-weight:700;">{{ app.sport or app.athlete_name }}</div>
+              {% if app.athlete_name and app.application_type == 'Coach' %}
+              <div style="font-size:13px;color:var(--muted);margin-top:6px;">Athlete: {{ app.athlete_name }}</div>
+              {% endif %}
+            </td>
+            <td>{{ app.location or '-' }}</td>
+            <td>
+              <span class="status-pill status-{{ app.status|default('Pending') }}">{{ app.status }}</span>
+            </td>
+            <td>{{ app.submission_date.strftime('%Y-%m-%d %H:%M') if app.submission_date else '-' }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <!-- Cards for mobile -->
+      <div class="app-cards" aria-hidden="false">
+        {% for app in applications %}
+        <div class="app-card" role="article" aria-label="Application {{ app.id }}">
+          <div class="row">
+            <div>
+              <div style="font-weight:700;">{{ app.application_type }} — {{ app.sport }}</div>
+              <div class="app-meta">{{ app.athlete_name or '' }}</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="status-pill status-{{ app.status|default('Pending') }}">{{ app.status }}</div>
+              <div style="font-size:12px;margin-top:6px;">{{ app.submission_date.strftime('%Y-%m-%d') if app.submission_date else '-' }}</div>
+            </div>
+          </div>
+          <div class="row" style="margin-top:8px;">
+            <div class="label">Location</div>
+            <div>{{ app.location or '-' }}</div>
+          </div>
+          <div style="margin-top:10px;">
+            <a href="/applications/{{ app.id }}" style="font-weight:700; text-decoration:none;">View</a>
+            {% if app.status == 'Pending' %}
+              &nbsp;·&nbsp;<a href="/applications/{{ app.id }}/withdraw" style="color:#b27700; text-decoration:none;">Withdraw</a>
+            {% endif %}
+          </div>
         </div>
-      </section>
+        {% endfor %}
+      </div>
+
+    {% else %}
+      <div style="margin-top:12px; background:#fbfdff; border:1px solid #f1f6f9; padding:16px; border-radius:10px; color:#203241;">
+        <div style="font-weight:700; margin-bottom:6px;">No applications found</div>
+        <div style="color:var(--muted); margin-bottom:10px;">You haven't submitted any applications yet. Click below to create your first application.</div>
+        <a class="add-email" href="/apply">Create Application</a>
+      </div>
+    {% endif %}
+  </div>
+{% endif %}
+
     </div>
   </main>
 
@@ -213,9 +321,9 @@
     }); // ✅ this was missing
 
     window.addEventListener('beforeunload', function(e){
-        if (editing) { 
-            e.preventDefault(); 
-            e.returnValue = ''; 
+        if (editing) {
+            e.preventDefault();
+            e.returnValue = '';
         }
     });
 })();
