@@ -7,10 +7,11 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      margin: 20px;
-      padding: 20px;
-      background-color: #5e4630;
+      margin: 0;
+      padding: 40px;
+      background: linear-gradient(to right, #33a8d8, #16c6b7);
     }
+
     .container {
       max-width: 1200px;
       margin: auto;
@@ -19,24 +20,34 @@
       border-radius: 8px;
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     }
+
     h2 {
       text-align: center;
+      margin-bottom: 15px;
     }
+
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 20px;
+      table-layout: fixed;
+      word-wrap: break-word;
+      font-size: 0.85rem; /* smaller font size */
     }
+
     th, td {
       border: 1px solid #ddd;
-      padding: 10px;
+      padding: 8px; /* reduced padding */
       text-align: center;
       vertical-align: middle;
+      font-size: 0.85rem; /* smaller text */
     }
+
     th {
-      background-color: #d87f11;
+      background-color: #16c6b7;
       color: white;
+      font-size: 0.7rem; /* slightly larger than td */
     }
+
     .action-btn {
       padding: 5px 10px;
       margin: 2px;
@@ -44,13 +55,16 @@
       border-radius: 5px;
       cursor: pointer;
       color: white;
+      font-size: 0.8rem;
     }
+
     .approve-btn {
       background-color: rgb(34, 139, 34);
     }
     .approve-btn:hover {
       background-color: rgb(0, 200, 0);
     }
+
     .deny-btn {
       background-color: rgb(160, 54, 54);
     }
@@ -89,7 +103,7 @@
 
   <script>
     function loadApplications() {
-      fetch('/get_pending_applications')  // backend should return applications with status='Pending'
+      fetch('/get_pending_applications') // backend should return applications with status='Pending'
         .then(response => response.json())
         .then(data => {
           let table = document.getElementById('applicationTable');
