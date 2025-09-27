@@ -97,7 +97,8 @@
               <div class="email">{{ session.email if session.email is defined else '' }}</div>
             </div>
             <div class="actions">
-              <button id="editBtn" class="btn-edit" aria-controls="profileForm">Edit</button>
+              <button id="editBtn" type="button" class="btn-edit">Edit</button>
+
             </div>
           </div>
 
@@ -168,38 +169,49 @@
   </main>
 
   <script>
-    (function(){
-      const editBtn = document.getElementById('editBtn');
-      const form = document.getElementById('profileForm');
-      if (!editBtn || !form) return;
-      let editing = false;
-      function setEditable(on){
-        const fields = form.querySelectorAll('input, select, textarea');
-        fields.forEach(f => {
-          const tag = f.tagName.toLowerCase();
-          if (tag === 'select') f.disabled = !on;
-          else if (on) { f.removeAttribute('readonly'); f.removeAttribute('disabled'); }
-          else { f.setAttribute('readonly',''); if (tag === 'select') f.disabled = true; }
-        });
-      }
-      setEditable(false);
-      editBtn.addEventListener('click', function(e){
-        if (!editing) {
-          editing = true;
-          editBtn.textContent = 'Save';
-          editBtn.style.transform = 'translateY(-1px)';
-          setEditable(true);
-          const first = form.querySelector('input:not([readonly]), select:not([disabled]), textarea:not([readonly])');
-          if (first) first.focus();
+(function(){
+  const editBtn = document.getElementById('editBtn');
+  const form = document.getElementById('profileForm');
+  if (!editBtn || !form) return;
+
+  let editing = false;
+
+  function setEditable(on){
+    const fields = form.querySelectorAll('input, select, textarea');
+    fields.forEach(f => {
+        const tag = f.tagName.toLowerCase();
+        if (tag === 'select') f.disabled = !on;
+        else if (on) {
+            f.removeAttribute('readonly');
+            f.removeAttribute('disabled');
         } else {
-          editBtn.disabled = true;
-          form.submit();
+            f.setAttribute('readonly','');
+            if (tag === 'select') f.disabled = true;
         }
-      });
-      window.addEventListener('beforeunload', function(e){
-        if (editing) { e.preventDefault(); e.returnValue = ''; }
-      });
-    })();
-  </script>
+    });
+}
+
+editBtn.addEventListener('click', function(e){
+    e.preventDefault();
+
+    if (!editing) {
+        editing = true;
+        editBtn.textContent = 'Save';
+        setEditable(true);
+    } else {
+        editing = false;
+        editBtn.textContent = 'Edit';
+        setEditable(true); // ✅ enable all fields for form submission
+        form.submit();
+    }
+});
+
+
+  window.addEventListener('beforeunload', function(e){
+    if (editing) { e.preventDefault(); e.returnValue = ''; }
+  });
+})();
+</script>
+
 </body>
 </html>
