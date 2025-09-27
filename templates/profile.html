@@ -168,50 +168,58 @@
     </div>
   </main>
 
-  <script>
-(function(){
-  const editBtn = document.getElementById('editBtn');
-  const form = document.getElementById('profileForm');
-  if (!editBtn || !form) return;
+    <script>
+    (function(){
+    const editBtn = document.getElementById('editBtn');
+    const form = document.getElementById('profileForm');
+    if (!editBtn || !form) return;
 
-  let editing = false;
+    let editing = false;
 
-  function setEditable(on){
-    const fields = form.querySelectorAll('input, select, textarea');
-    fields.forEach(f => {
-        const tag = f.tagName.toLowerCase();
-        if (tag === 'select') f.disabled = !on;
-        else if (on) {
-            f.removeAttribute('readonly');
-            f.removeAttribute('disabled');
+    function setEditable(on){
+        const fields = form.querySelectorAll('input, select, textarea');
+        fields.forEach(f => {
+            const tag = f.tagName.toLowerCase();
+            if (tag === 'select') f.disabled = !on;
+            else if (on) {
+                f.removeAttribute('readonly');
+                f.removeAttribute('disabled');
+            } else {
+                f.setAttribute('readonly','');
+                if (tag === 'select') f.disabled = true;
+            }
+        });
+    }
+
+    editBtn.addEventListener('click', function(e){
+        e.preventDefault();
+
+        if (!editing) {
+            editing = true;
+            editBtn.textContent = 'Save';
+            setEditable(true);
         } else {
-            f.setAttribute('readonly','');
-            if (tag === 'select') f.disabled = true;
+            editing = false;
+            editBtn.textContent = 'Edit';
+
+            // 🔑 re-enable all fields so they are submitted
+            form.querySelectorAll('input, select, textarea').forEach(field => {
+                field.removeAttribute('readonly');
+                field.removeAttribute('disabled');
+            });
+
+            form.submit();
+        }
+    }); // ✅ this was missing
+
+    window.addEventListener('beforeunload', function(e){
+        if (editing) { 
+            e.preventDefault(); 
+            e.returnValue = ''; 
         }
     });
-}
-
-editBtn.addEventListener('click', function(e){
-    e.preventDefault();
-
-    if (!editing) {
-        editing = true;
-        editBtn.textContent = 'Save';
-        setEditable(true);
-    } else {
-        editing = false;
-        editBtn.textContent = 'Edit';
-        setEditable(true); // ✅ enable all fields for form submission
-        form.submit();
-    }
-});
-
-
-  window.addEventListener('beforeunload', function(e){
-    if (editing) { e.preventDefault(); e.returnValue = ''; }
-  });
 })();
-</script>
+  </script>
 
 </body>
 </html>
