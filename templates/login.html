@@ -350,6 +350,7 @@
 
       const regEmail = document.getElementById("regEmail").value.trim();
       const regPassword = document.getElementById("regPassword").value.trim();
+      const regName = document.getElementById("regName").value.trim();
       const regType = document.getElementById("regType").value;
       const emailPattern = /^[^ ]+@[^ ]+\.[a-z]{2,}$/;
 
@@ -371,7 +372,7 @@
       fetch("/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: regEmail, password: regPassword, type: regType })
+        body: JSON.stringify({ email: regEmail,name: regName, password: regPassword, type: regType })
       })
       .then(res => res.json())
       .then(data => {
