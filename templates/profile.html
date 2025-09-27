@@ -19,16 +19,41 @@
       --ease: cubic-bezier(.2,.9,.25,1);
     }
     * { box-sizing: border-box; }
-    html,body { height: 100%; margin: 0; font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; -webkit-font-smoothing:antialiased; background: linear-gradient(180deg, #051017 0%, #07202a 100%); color: rgba(255,255,255,0.95); }
-    .nav { position:fixed; top:18px; left:18px; right:18px; z-index:70; display:flex; align-items:center; justify-content:space-between; pointer-events:auto; }
-    .brand { display:flex; gap:12px; align-items:center; }
+    html, body {
+  height: 100%;
+  margin: 0;
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  -webkit-font-smoothing: antialiased;
+  
+  /* ✅ Fullscreen background */
+  background: 
+    linear-gradient(#33a8d8, #16c6b7),  /* dark overlay */
+    url("https://images.unsplash.com/photo-1521412644187-c49fa049e84d?auto=format&fit=crop&w=1600&q=80"); /* sports bg */
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;  /* nice parallax feel */
+  
+  color: rgba(255,255,255,0.95);
+}
+.nav {
+  position: relative;   /* ✅ no longer fixed */
+  margin: 18px;         /* keeps spacing around */
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+}
+.brand { display:flex; gap:12px; align-items:center; }
     .logo { width:56px; height:56px; border-radius:6px; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,var(--accent),var(--accent-2)); color:#042; font-family:"Playfair Display",serif; font-weight:700; font-size:18px; }
     .brand .name { color:rgba(255,255,255,0.92); font-weight:1000; letter-spacing:1px; }
     .nav-links { display:flex; gap:12px; align-items:center; }
     .nav-links a { color:rgba(255,255,255,0.75); padding:6px 10px; border-radius:6px; text-decoration:none; }
     .nav-links a.active, .nav-links a:hover { color:#fff; background: rgba(255,255,255,0.04); }
-    .page { max-width:1180px; margin: 92px auto 48px; padding: 20px; }
-    .panel { background: var(--card-bg); color: var(--fg-dark); border-radius: 16px; box-shadow: 0 18px 50px rgba(2,10,18,0.6); overflow: hidden; display: block; }
+    .page {
+  max-width:1180px;
+  margin: 24px auto 48px; /* smaller top margin now */
+  padding: 20px;
+}
+.panel { background: var(--card-bg); color: var(--fg-dark); border-radius: 16px; box-shadow: 0 18px 50px rgba(2,10,18,0.6); overflow: hidden; display: block; }
     .banner { height:120px; background: linear-gradient(90deg, rgba(51,168,216,0.14), rgba(22,198,183,0.14)); position:relative; padding:20px 28px; display:flex; align-items:center; gap:18px; }
     .banner .title { font-family: "Playfair Display", serif; color: var(--fg-dark); font-size:1.3rem; font-weight:700; letter-spacing:1px; }
     .banner .subtitle { color: rgba(0,0,0,0.55); font-size:0.92rem; margin-top:6px; }
@@ -89,6 +114,7 @@
       .app-cards { display:flex; flex-direction:column; }
     }
     .panel-wrap { padding: 12px; }
+    
   </style>
 </head>
 <body>
