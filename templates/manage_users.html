@@ -131,7 +131,7 @@
         <div class="name">SPORTURE</div>
     </div>
     <nav class="nav-links">
-        <a href="/">Back</a>
+        <a href="/admin">Back</a>
         <button class="logout-btn" onclick="logout()">Logout</button>
     </nav>
 </div>
@@ -154,60 +154,45 @@
   </div>
 
 
-  <script>
-    function loadApplications() {
-      fetch('/get_pending_applications') // backend should return applications with status='Pending'
+ <script>
+    const userType = new URLSearchParams(window.location.search).get('type');
+
+    function loadUsers() {
+        fetch(`/get_users?type=${userType}`)
+            .then(response => response.json())
+            .then(data => {
+                let userTable = document.getElementById('userTable');
+                userTable.innerHTML = '';
+                data.forEach(user => {
+                    let row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${user.id}</td>
+                        <td>${user.name}</td>
+                        <td>${user.email}</td>
+                        <td><button class="delete-btn" onclick="deleteUser(${user.id})">Delete</button></td>
+                    `;
+                    userTable.appendChild(row);
+                });
+            });
+    }
+
+    // placeholder delete function
+    function deleteUser(userId) {
+    if (!confirm("Are you sure you want to delete this user?")) return;
+
+    fetch(`/delete_user/${userType}/${userId}`, { method: 'DELETE' })
         .then(response => response.json())
         .then(data => {
-          let table = document.getElementById('applicationTable');
-          table.innerHTML = '';
+            if (data.success) {
+                loadUsers(); // refresh table after deletion
+            } else {
+                alert("Error deleting user: " + data.message);
+            }
+        })
+        .catch(err => console.error("Delete error:", err));
+}
 
-          data.forEach(app => {
-            let row = document.createElement('tr');
-            row.innerHTML = `
-              <td>${app.id}</td>
-              <td>${app.athlete_name}</td>
-              <td>${app.age || ''}</td>
-              <td>${app.gender || ''}</td>
-              <td>${app.sport}</td>
-              <td>${app.location || ''}</td>
-              <td>${app.application_type}</td>
-              <td>${app.achievements || ''}</td>
-              <td>${app.motivation || ''}</td>
-              <td>${app.goals || ''}</td>
-              <td>${app.availability || ''}</td>
-              <td>${app.supporting_docs || ''}</td>
-              <td>${new Date(app.submission_date).toLocaleString()}</td>
-              <td>
-                <button class="action-btn approve-btn" onclick="updateStatus(${app.id}, 'Forwarded', '${app.application_type}')">Approve</button>
-                <button class="action-btn deny-btn" onclick="updateStatus(${app.id}, 'Denied')">Deny</button>
-              </td>
-            `;
-            table.appendChild(row);
-          });
-        });
-    }
-
-    function updateStatus(appId, status, type=null) {
-      if (status === 'Denied' && !confirm("Are you sure you want to deny this application?")) return;
-
-      fetch(`/update_application_status/${appId}`, {
-        method: 'POST', // or PUT depending on backend
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: status, type: type })
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.success) {
-          loadApplications();
-        } else {
-          alert("Error updating status: " + data.message);
-        }
-      })
-      .catch(err => console.error(err));
-    }
-
-    window.onload = loadApplications;
+window.onload = loadUsers;
   </script>
 </body>
 </html>

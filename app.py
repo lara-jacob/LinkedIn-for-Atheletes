@@ -1,16 +1,19 @@
-from flask import Flask, request, jsonify, render_template, session, redirect, url_for
+# app.py (updated)
+from flask import Flask, request, jsonify, render_template, session, redirect, url_for, abort
 import psycopg2
+from psycopg2.extras import RealDictCursor
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
 import logging
-from flask import abort
-# near your app setup
+from datetime import datetime
+
 logging.basicConfig(level=logging.DEBUG)
 
-app = Flask(_name_)
+app = Flask(__name__)
 CORS(app)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "replace_this_in_prod")
+
 
 def get_db_connection():
     return psycopg2.connect(
@@ -21,46 +24,50 @@ def get_db_connection():
         port=5432
     )
 
+
 @app.route("/")
 def home():
     return render_template("index.html")
+
 
 @app.route("/login_page")
 def login_page():
     return render_template("login.html")
 
+
 @app.route("/application")
 def application_page():
     return render_template("application.html")
+
 
 @app.route('/admin')
 def admin():
     return render_template('admin.html')
 
+
 @app.route('/adminlogin')
 def adminlogin():
     return render_template('adminlogin.html')
 
+
 @app.route("/manage_users")
 def manage_users():
-    return render_template("manage_users.html")  
+    return render_template("manage_users.html")
+
 
 @app.route("/application_approval")
 def application_approval():
-    return render_template("application_approval.html") 
+    return render_template("application_approval.html")
 
-# Register: now accepts optional display name fields (full_name / name / contact_person)
+
+# Register
 @app.route("/register", methods=["POST"])
 def register():
-    # accept JSON or form-encoded POSTs
     data = {}
     if request.is_json:
         data = request.get_json() or {}
     else:
-        # fallback to form data (HTML forms or fetch with form body)
         data = request.form.to_dict() or {}
-
-        # also accept query-string fallback (rare)
         if not data:
             data = request.args.to_dict() or {}
 
@@ -69,7 +76,6 @@ def register():
     email = (data.get("email") or "").strip()
     password = data.get("password")
     user_type = (data.get("type") or data.get("user_type") or "").strip()
-    # accept multiple field names for name
     full_name = data.get("full_name") or data.get("name") or data.get("contact_person")
 
     if not email or not password or not user_type:
@@ -131,10 +137,10 @@ def register():
         return jsonify({"success": False, "message": str(e)}), 500
 
 
-# Login: read name columns and store display_name in session
+# Login: store display_name and role in session
 @app.route("/login", methods=["POST"])
 def login():
-    data = request.get_json()
+    data = request.get_json() or {}
     email = data.get("email")
     password = data.get("password")
 
@@ -148,14 +154,14 @@ def login():
         stored_password = None
         display_name = None
 
-        # athletes: full_name
+        # athletes
         cur.execute("SELECT password, full_name FROM athletes WHERE email=%s", (email,))
         row = cur.fetchone()
         if row:
             stored_password, display_name = row[0], row[1]
             user_type = "athlete"
 
-        # coaches: full_name
+        # coaches
         if not stored_password:
             cur.execute("SELECT password, full_name FROM coaches WHERE email=%s", (email,))
             row = cur.fetchone()
@@ -163,13 +169,12 @@ def login():
                 stored_password, display_name = row[0], row[1]
                 user_type = "coach"
 
-        # sponsors: name (or contact_person)
+        # sponsors
         if not stored_password:
             cur.execute("SELECT password, name, contact_person FROM sponsors WHERE email=%s", (email,))
             row = cur.fetchone()
             if row:
                 stored_password = row[0]
-                # prefer name, fallback to contact_person
                 display_name = row[1] or row[2]
                 user_type = "sponsor"
 
@@ -177,7 +182,6 @@ def login():
         conn.close()
 
         if stored_password and check_password_hash(stored_password, password):
-            # fallback to email if name not present
             display_name = display_name or email.split("@")[0]
             session['email'] = email
             session['user_type'] = user_type
@@ -194,12 +198,13 @@ def login():
         return jsonify({"success": False, "message": "Invalid credentials"}), 401
 
     except Exception as e:
+        logging.exception("Login error")
         return jsonify({"success": False, "message": str(e)}), 500
 
 
 @app.route("/submit_application", methods=["POST"])
 def submit_application():
-    data = request.get_json()
+    data = request.get_json() or {}
     athlete_name = data.get("athlete_name")
     age = data.get("age")
     gender = data.get("gender")
@@ -230,8 +235,8 @@ def submit_application():
         conn.close()
         return jsonify({"success": True, "message": "Application submitted successfully"})
     except Exception as e:
+        logging.exception("Submit application error")
         return jsonify({"success": False, "message": str(e)}), 500
-
 
 
 @app.route("/dashboard")
@@ -243,7 +248,6 @@ def dashboard_page():
     user_type = session["user_type"]
     display_name = session.get("display_name", email.split("@")[0])
 
-    # fetch profile details if you want more data (optional)
     try:
         conn = get_db_connection()
         cur = conn.cursor()
@@ -256,12 +260,14 @@ def dashboard_page():
             if row:
                 profile = {"full_name": row[0], "sport": row[1]}
                 role_label = f"Athlete ({row[1] or ''})"
+
         elif user_type == "coach":
             cur.execute("SELECT full_name, specialization FROM coaches WHERE email=%s", (email,))
             row = cur.fetchone()
             if row:
                 profile = {"full_name": row[0], "specialization": row[1]}
                 role_label = f"Coach ({row[1] or ''})"
+
         elif user_type == "sponsor":
             cur.execute("SELECT name, sport FROM sponsors WHERE email=%s", (email,))
             row = cur.fetchone()
@@ -276,11 +282,9 @@ def dashboard_page():
         except:
             pass
 
-    # compute profile_pct quickly (optional)
     filled = sum(1 for v in profile.values() if v)
     total = max(len(profile), 1)
     profile_pct = int((filled / total) * 100) if total else 0
-
     avatar_url = session.get("avatar_url") or f"https://avatars.dicebear.com/api/identicon/{display_name}.svg?scale=85"
 
     return render_template(
@@ -294,9 +298,6 @@ def dashboard_page():
     )
 
 
-from psycopg2.extras import RealDictCursor
-from datetime import datetime
-
 @app.route("/profile")
 def profile_page():
     if "email" not in session or "user_type" not in session:
@@ -308,13 +309,12 @@ def profile_page():
     avatar_url = session.get("avatar_url") or f"https://avatars.dicebear.com/api/identicon/{display_name}.svg?scale=85"
 
     conn = get_db_connection()
-    # use RealDictCursor to make mapping rows -> dicts easier
     cur = conn.cursor(cursor_factory=RealDictCursor)
     user = {}
+    applications = []
 
     try:
         if user_type == "athlete":
-            # get athlete personal data
             cur.execute("""
                 SELECT full_name, age, gender, sport, achievements, ranking, experience_years, contact_number, location
                 FROM athletes
@@ -333,10 +333,8 @@ def profile_page():
                     "contact_number": athlete_row["contact_number"],
                     "location": athlete_row["location"],
                 }
-            # fallback display name if full_name not present
             athlete_name = user.get("full_name") or display_name
 
-            # fetch ALL applications for this athlete (newest first)
             cur.execute("""
                 SELECT id, athlete_name, application_type, sport, location, status, submission_date,
                        achievements, motivation, goals, supporting_docs
@@ -344,12 +342,9 @@ def profile_page():
                 WHERE athlete_name = %s
                 ORDER BY submission_date DESC
             """, (athlete_name,))
-            apps = cur.fetchall()
-            # apps will be a list of RealDictRow (dict-like). Keep as list to pass into template.
-            applications = apps or []
+            applications = cur.fetchall() or []
 
         elif user_type == "coach":
-            # coach personal data
             cur.execute("""
                 SELECT full_name, specialization, certifications, experience_years, contact_number, location
                 FROM coaches
@@ -366,20 +361,17 @@ def profile_page():
                     "location": row["location"],
                 }
 
-            # attempt to find any applications that reference this coach (best-effort)
-            coach_name = user.get("full_name") or display_name
+            # show forwarded applications for coaches
             cur.execute("""
                 SELECT id, athlete_name, application_type, sport, location, status, submission_date,
-                       achievements, motivation, goals, supporting_docs
+                       achievements, motivation, goals, supporting_docs, forwarded_date
                 FROM applications
-                WHERE application_type ILIKE 'Coach' AND (supporting_docs ILIKE %s OR motivation ILIKE %s)
+                WHERE status = 'Forwarded' AND LOWER(application_type) = 'coach'
                 ORDER BY submission_date DESC
-                LIMIT 0
-            """, (f"%{coach_name}%", f"%{coach_name}%"))  # default: empty resultset; adjust as needed
+            """)
             applications = cur.fetchall() or []
 
         elif user_type == "sponsor":
-            # sponsor personal data
             cur.execute("""
                 SELECT name, contact_person, sport, contact_number, location
                 FROM sponsors
@@ -395,27 +387,23 @@ def profile_page():
                     "location": row["location"],
                 }
 
-            # attempt to find sponsor-related applications (best-effort)
-            sponsor_name = user.get("name") or user.get("contact_person") or display_name
+            # show forwarded applications for sponsors
             cur.execute("""
                 SELECT id, athlete_name, application_type, sport, location, status, submission_date,
-                       achievements, motivation, goals, supporting_docs
+                       achievements, motivation, goals, supporting_docs, forwarded_date
                 FROM applications
-                WHERE application_type ILIKE 'Sponsor' AND (supporting_docs ILIKE %s OR goals ILIKE %s)
+                WHERE status = 'Forwarded' AND LOWER(application_type) = 'sponsor'
                 ORDER BY submission_date DESC
-                LIMIT 0
-            """, (f"%{sponsor_name}%", f"%{sponsor_name}%"))
+            """)
             applications = cur.fetchall() or []
 
         else:
-            # unknown user type -> no applications
             applications = []
 
     finally:
         cur.close()
         conn.close()
 
-    # render the template with the applications list
     return render_template(
         "profile.html",
         user=user,
@@ -426,7 +414,7 @@ def profile_page():
     )
 
 
-
+# ----- profile update endpoints (unchanged) -----
 @app.route("/update_profile/coach", methods=["POST"])
 def update_profile_coach():
     if "email" not in session or session.get("user_type") != "coach":
@@ -499,7 +487,7 @@ def update_profile_sponsor():
 
 @app.route("/get_users")
 def get_users():
-    user_type = request.args.get("type")  # athlete, coach, sponsor
+    user_type = request.args.get("type")
 
     conn = get_db_connection()
     cur = conn.cursor()
@@ -524,7 +512,7 @@ def get_users():
             users = []
 
     except Exception as e:
-        print("Error fetching users:", e)
+        logging.exception("Error fetching users")
         users = []
 
     finally:
@@ -532,6 +520,7 @@ def get_users():
         conn.close()
 
     return jsonify(users)
+
 
 @app.route("/delete_user/<user_type>/<int:user_id>", methods=["DELETE"])
 def delete_user(user_type, user_id):
@@ -551,12 +540,13 @@ def delete_user(user_type, user_id):
         return jsonify({"success": True})
 
     except Exception as e:
-        print("Delete error:", e)
+        logging.exception("Delete error")
         return jsonify({"success": False, "message": str(e)}), 500
 
     finally:
         cur.close()
         conn.close()
+
 
 @app.route('/get_pending_applications')
 def get_pending_applications():
@@ -564,28 +554,116 @@ def get_pending_applications():
     cur = conn.cursor()
     cur.execute("SELECT * FROM applications WHERE status='Pending'")
     apps = cur.fetchall()
-    # Convert to JSON-friendly dict list
     keys = [desc[0] for desc in cur.description]
     result = [dict(zip(keys, row)) for row in apps]
+    cur.close()
+    conn.close()
     return jsonify(result)
 
+
+# Admin endpoint: forward (makes visible to coaches/sponsors) or deny
 @app.route('/update_application_status/<int:app_id>', methods=['POST'])
 def update_application_status(app_id):
-    data = request.get_json()
-    status = data['status']
+    data = request.get_json() or {}
+    status = data.get('status')
     app_type = data.get('type', None)
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute("UPDATE applications SET status=%s WHERE id=%s", (status, app_id))
-    conn.commit()
 
-    # Optional: if approved, make it visible to coaches/sponsors
-    if status == 'Forwarded' and app_type:
-        table_name = 'coaches' if app_type=='Coach' else 'sponsors'
-        # Insert into another table or notify them as needed
+    if status not in ('Forwarded', 'Denied'):
+        return jsonify({"success": False, "message": "Invalid status"}), 400
 
-    return jsonify({"success": True})
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        if status == 'Forwarded':
+            if not app_type:
+                cur.close(); conn.close()
+                return jsonify({"success": False, "message": "Missing application type for forwarding"}), 400
+            cur.execute("""
+                UPDATE applications
+                SET status = %s,
+                    forwarded_date = %s
+                WHERE id = %s
+            """, ('Forwarded', datetime.utcnow(), app_id))
+        else:
+            cur.execute("UPDATE applications SET status = %s WHERE id = %s", ('Denied', app_id))
+
+        conn.commit()
+        cur.close()
+        conn.close()
+        return jsonify({"success": True})
+    except Exception as e:
+        logging.exception("Error updating application status")
+        return jsonify({"success": False, "message": str(e)}), 500
 
 
-if _name_ == "_main_":
+# Coach/Sponsor responds to forwarded application
+@app.route('/respond_application/<int:app_id>', methods=['POST'])
+def respond_application(app_id):
+    if "email" not in session or "user_type" not in session:
+        return jsonify({"success": False, "message": "Not authenticated"}), 401
+
+    user_type = session.get("user_type")  # 'coach' or 'sponsor'
+    user_email = session.get("email")
+    if user_type not in ('coach', 'sponsor'):
+        return jsonify({"success": False, "message": "Only coaches or sponsors can respond"}), 403
+
+    data = request.get_json() or {}
+    action = (data.get("action") or "").lower()
+    notes = data.get("notes")
+
+    if action not in ('approve', 'deny'):
+        return jsonify({"success": False, "message": "Invalid action"}), 400
+
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute("SELECT id, status, application_type FROM applications WHERE id=%s", (app_id,))
+        app_row = cur.fetchone()
+        if not app_row:
+            cur.close(); conn.close()
+            return jsonify({"success": False, "message": "Application not found"}), 404
+
+        if app_row['status'] != 'Forwarded':
+            cur.close(); conn.close()
+            return jsonify({"success": False, "message": "Application is not available for response"}), 400
+
+        app_type = (app_row['application_type'] or "").strip().lower()
+        if user_type == 'coach' and app_type != 'coach':
+            cur.close(); conn.close()
+            return jsonify({"success": False, "message": "This application was not forwarded to coaches"}), 403
+        if user_type == 'sponsor' and app_type != 'sponsor':
+            cur.close(); conn.close()
+            return jsonify({"success": False, "message": "This application was not forwarded to sponsors"}), 403
+
+        if action == 'approve':
+            cur.execute("""
+                UPDATE applications
+                SET status = %s,
+                    assigned_to_type = %s,
+                    assigned_to_email = %s,
+                    assigned_date = %s,
+                    approval_notes = %s
+                WHERE id = %s
+            """, ('Approved', user_type, user_email, datetime.utcnow(), notes, app_id))
+            conn.commit()
+            cur.close(); conn.close()
+            return jsonify({"success": True, "message": "Application approved"})
+
+        else:  # deny
+            cur.execute("""
+                UPDATE applications
+                SET status = %s,
+                    approval_notes = %s
+                WHERE id = %s
+            """, ('Denied', notes, app_id))
+            conn.commit()
+            cur.close(); conn.close()
+            return jsonify({"success": True, "message": "Application denied"})
+
+    except Exception as e:
+        logging.exception("Error responding to application")
+        return jsonify({"success": False, "message": str(e)}), 500
+
+
+if __name__ == "__main__":
     app.run(debug=True)
