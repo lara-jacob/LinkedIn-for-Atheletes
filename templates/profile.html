@@ -309,17 +309,20 @@
 
     let editing = false;
 
+    // ✅ Function to toggle readonly/disabled fields
     function setEditable(on){
         const fields = form.querySelectorAll('input, select, textarea');
         fields.forEach(f => {
-            const tag = f.tagName.toLowerCase();
-            if (tag === 'select') f.disabled = !on;
-            else if (on) {
-                f.removeAttribute('readonly');
-                f.removeAttribute('disabled');
+            if (f.tagName.toLowerCase() === 'select') {
+                f.disabled = !on;
             } else {
-                f.setAttribute('readonly','');
-                if (tag === 'select') f.disabled = true;
+                if (on) {
+                    f.removeAttribute('readonly');
+                    f.removeAttribute('disabled');
+                } else {
+                    f.setAttribute('readonly', '');
+                    f.setAttribute('disabled', false); // keep select enabled only when editing
+                }
             }
         });
     }
@@ -328,23 +331,83 @@
         e.preventDefault();
 
         if (!editing) {
+            // Switch to editing mode
             editing = true;
             editBtn.textContent = 'Save';
             setEditable(true);
         } else {
+            // Switch back and submit
             editing = false;
             editBtn.textContent = 'Edit';
-
-            // 🔑 re-enable all fields so they are submitted
-            form.querySelectorAll('input, select, textarea').forEach(field => {
-                field.removeAttribute('readonly');
-                field.removeAttribute('disabled');
+            
+            // Enable all fields so form sends all values
+            form.querySelectorAll('input, select, textarea').forEach(f => {
+                f.removeAttribute('readonly');
+                f.removeAttribute('disabled');
             });
 
+            // Submit the form
             form.submit();
         }
-    }); // ✅ this was missing
+    });
 
+    // Warn user if leaving page with unsaved changes
+    window.addEventListener('beforeunload', function(e){
+        if (editing) {
+            e.preventDefault();
+            e.returnValue = '';
+        }
+    });
+})();(function(){
+    const editBtn = document.getElementById('editBtn');
+    const form = document.getElementById('profileForm');
+    if (!editBtn || !form) return;
+
+    let editing = false;
+
+    // ✅ Function to toggle readonly/disabled fields
+    function setEditable(on){
+        const fields = form.querySelectorAll('input, select, textarea');
+        fields.forEach(f => {
+            if (f.tagName.toLowerCase() === 'select') {
+                f.disabled = !on;
+            } else {
+                if (on) {
+                    f.removeAttribute('readonly');
+                    f.removeAttribute('disabled');
+                } else {
+                    f.setAttribute('readonly', '');
+                    f.setAttribute('disabled', false); // keep select enabled only when editing
+                }
+            }
+        });
+    }
+
+    editBtn.addEventListener('click', function(e){
+        e.preventDefault();
+
+        if (!editing) {
+            // Switch to editing mode
+            editing = true;
+            editBtn.textContent = 'Save';
+            setEditable(true);
+        } else {
+            // Switch back and submit
+            editing = false;
+            editBtn.textContent = 'Edit';
+            
+            // Enable all fields so form sends all values
+            form.querySelectorAll('input, select, textarea').forEach(f => {
+                f.removeAttribute('readonly');
+                f.removeAttribute('disabled');
+            });
+
+            // Submit the form
+            form.submit();
+        }
+    });
+
+    // Warn user if leaving page with unsaved changes
     window.addEventListener('beforeunload', function(e){
         if (editing) {
             e.preventDefault();

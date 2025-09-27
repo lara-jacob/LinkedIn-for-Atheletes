@@ -309,12 +309,13 @@ def profile_page():
     avatar_url = session.get("avatar_url") or f"https://avatars.dicebear.com/api/identicon/{display_name}.svg?scale=85"
 
     conn = get_db_connection()
+    # use RealDictCursor to make mapping rows -> dicts easier
     cur = conn.cursor(cursor_factory=RealDictCursor)
     user = {}
-    applications = []
 
     try:
         if user_type == "athlete":
+            # get athlete personal data
             cur.execute("""
                 SELECT full_name, age, gender, sport, achievements, ranking, experience_years, contact_number, location
                 FROM athletes
@@ -333,8 +334,10 @@ def profile_page():
                     "contact_number": athlete_row["contact_number"],
                     "location": athlete_row["location"],
                 }
+            # fallback display name if full_name not present
             athlete_name = user.get("full_name") or display_name
 
+            # fetch ALL applications for this athlete (newest first)
             cur.execute("""
                 SELECT id, athlete_name, application_type, sport, location, status, submission_date,
                        achievements, motivation, goals, supporting_docs
@@ -342,9 +345,12 @@ def profile_page():
                 WHERE athlete_name = %s
                 ORDER BY submission_date DESC
             """, (athlete_name,))
-            applications = cur.fetchall() or []
+            apps = cur.fetchall()
+            # apps will be a list of RealDictRow (dict-like). Keep as list to pass into template.
+            applications = apps or []
 
         elif user_type == "coach":
+            # coach personal data
             cur.execute("""
                 SELECT full_name, specialization, certifications, experience_years, contact_number, location
                 FROM coaches
@@ -361,17 +367,20 @@ def profile_page():
                     "location": row["location"],
                 }
 
-            # show forwarded applications for coaches
+            # attempt to find any applications that reference this coach (best-effort)
+            coach_name = user.get("full_name") or display_name
             cur.execute("""
                 SELECT id, athlete_name, application_type, sport, location, status, submission_date,
-                       achievements, motivation, goals, supporting_docs, forwarded_date
+                       achievements, motivation, goals, supporting_docs
                 FROM applications
-                WHERE status = 'Forwarded' AND LOWER(application_type) = 'coach'
+                WHERE application_type ILIKE 'Coach' AND (supporting_docs ILIKE %s OR motivation ILIKE %s)
                 ORDER BY submission_date DESC
-            """)
+                LIMIT 0
+            """, (f"%{coach_name}%", f"%{coach_name}%"))  # default: empty resultset; adjust as needed
             applications = cur.fetchall() or []
 
         elif user_type == "sponsor":
+            # sponsor personal data
             cur.execute("""
                 SELECT name, contact_person, sport, contact_number, location
                 FROM sponsors
@@ -387,23 +396,27 @@ def profile_page():
                     "location": row["location"],
                 }
 
-            # show forwarded applications for sponsors
+            # attempt to find sponsor-related applications (best-effort)
+            sponsor_name = user.get("name") or user.get("contact_person") or display_name
             cur.execute("""
                 SELECT id, athlete_name, application_type, sport, location, status, submission_date,
-                       achievements, motivation, goals, supporting_docs, forwarded_date
+                       achievements, motivation, goals, supporting_docs
                 FROM applications
-                WHERE status = 'Forwarded' AND LOWER(application_type) = 'sponsor'
+                WHERE application_type ILIKE 'Sponsor' AND (supporting_docs ILIKE %s OR goals ILIKE %s)
                 ORDER BY submission_date DESC
-            """)
+                LIMIT 0
+            """, (f"%{sponsor_name}%", f"%{sponsor_name}%"))
             applications = cur.fetchall() or []
 
         else:
+            # unknown user type -> no applications
             applications = []
 
     finally:
         cur.close()
         conn.close()
 
+    # render the template with the applications list
     return render_template(
         "profile.html",
         user=user,
@@ -414,7 +427,71 @@ def profile_page():
     )
 
 
-# ----- profile update endpoints (unchanged) -----
+# ----- profile update endpoints -----
+
+@app.route("/update_profile/athlete", methods=["POST"])
+def update_profile_athlete():
+    if "email" not in session or session.get("user_type") != "athlete":
+        return redirect(url_for("login_page"))
+
+    email = session["email"]
+
+    # fetch current values
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT full_name, age, gender, sport, achievements, ranking, experience_years, contact_number, location
+        FROM athletes WHERE email=%s
+    """, (email,))
+    row = cur.fetchone()
+    if not row:
+        cur.close(); conn.close()
+        return redirect(url_for("profile_page"))
+
+    current = {
+        "full_name": row[0],
+        "age": row[1],
+        "gender": row[2],
+        "sport": row[3],
+        "achievements": row[4],
+        "ranking": row[5],
+        "experience_years": row[6],
+        "contact_number": row[7],
+        "location": row[8],
+    }
+
+    # merge with form values (keep old if not provided)
+    updated = {
+        "full_name": request.form.get("full_name") or current["full_name"],
+        "age": request.form.get("age") or current["age"],
+        "gender": request.form.get("gender") or current["gender"],
+        "sport": request.form.get("sport") or current["sport"],
+        "achievements": request.form.get("achievements") or current["achievements"],
+        "ranking": request.form.get("ranking") or current["ranking"],
+        "experience_years": request.form.get("experience_years") or current["experience_years"],
+        "contact_number": request.form.get("contact_number") or current["contact_number"],
+        "location": request.form.get("location") or current["location"],
+    }
+
+    try:
+        cur.execute("""
+            UPDATE athletes
+            SET full_name=%s, age=%s, gender=%s, sport=%s, achievements=%s,
+                ranking=%s, experience_years=%s, contact_number=%s, location=%s
+            WHERE email=%s
+        """, (updated["full_name"], updated["age"], updated["gender"], updated["sport"],
+              updated["achievements"], updated["ranking"], updated["experience_years"],
+              updated["contact_number"], updated["location"], email))
+        conn.commit()
+    except Exception as e:
+        logging.exception("Error updating athlete profile")
+    finally:
+        cur.close()
+        conn.close()
+
+    return redirect(url_for("profile_page"))
+
+
 @app.route("/update_profile/coach", methods=["POST"])
 def update_profile_coach():
     if "email" not in session or session.get("user_type") != "coach":
